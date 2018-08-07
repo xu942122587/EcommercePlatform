@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.consume.dao.manual.ConsumeDAO">
+	<resultMap type="Consume" id="resultConsume">
+		<id column="id" property="id" />
+		<result column="consumeCode" property="consumeCode" />
+		<result column="type" property="type" />
+		<result column="money" property="money" />
+		<result column="remark" property="remark" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="customer" column="customer_id" select="com.unitever.module.customer.dao.manual.CustomerDAO.get" />
+		<association property="guideUser" column="guideUser_id" select="com.unitever.auth.user.dao.manual.UserDAO.get" />
+	</resultMap>
+
+	<select id="get" resultMap="resultConsume" parameterType="String">
+		select * from th_consume
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultConsume">
+		select * from th_consume order by createTime desc
+	</select>
+<!-- 根据用户获取交易流水记录 -->
+	<select id="getConsumeByCustomerId" resultMap="resultConsume">
+		select * from th_consume where customer_id=#{customerId} order by createTime desc
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_consume where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="Consume">
+		insert into
+		th_consume(id,customer_id,guideUser_id,consumeCode,type,money,remark,createTime,ft,fu)
+		value(#{id},#{customer.id},#{guideUser.id},#{consumeCode},#{type},#{money},#{remark},#{createTime},#{ft},#{fu})
+	</insert>
+
+	<select id="getCountByObject" resultType="Integer" parameterType="Consume">
+		select count(*) From th_consume
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				and customer_id=#{customer.id}
+			</if>
+			<if test="customer != null and customer.name != null and customer.name != ''">
+				and customer_id in (select id from th_customer where name like CONCAT('%','${customer.name}','%'))
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				and guideUser_id=#{guideUser.id}
+			</if>
+			<if test="guideUser != null and guideUser.username != null and guideUser.username != ''">
+				and guideUser_id in (select id from auth_user where username like CONCAT('%','${guideUser.username}','%'))
+			</if>
+			<if test="consumeCode != null and consumeCode != ''">
+				and consumeCode=#{consumeCode}
+			</if>
+			<if test="type != null and type != ''">
+				and type=#{type}
+			</if>
+			<if test="money != null and money != ''">
+				and money=#{money}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+	</select>
+
+	<select id="getConsumeByConsumeForType" resultMap="resultConsume" parameterType="Consume">
+		select * From th_consume
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				and customer_id=#{customer.id}
+			</if>
+			<if test="customer != null and customer.name != null and customer.name != ''">
+				and customer_id in (select id from th_customer where name like CONCAT('%','${customer.name}','%'))
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				and guideUser_id=#{guideUser.id}
+			</if>
+			<if test="guideUser != null and guideUser.username != null and guideUser.username != ''">
+				and guideUser_id in (select id from auth_user where username like CONCAT('%','${guideUser.username}','%'))
+			</if>
+			<if test="consumeCode != null and consumeCode != ''">
+				and consumeCode=#{consumeCode}
+			</if>
+			<if test="money != null and money != ''">
+				and money=#{money}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and (type='1' or type='2')
+		</where>
+		order by createTime desc
+	</select>
+
+	<select id="getConsumeByConsume" resultMap="resultConsume" parameterType="Consume">
+		select * From th_consume
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				and customer_id=#{customer.id}
+			</if>
+			<if test="customer != null and customer.name != null and customer.name != ''">
+				and customer_id in (select id from th_customer where name like CONCAT('%','${customer.name}','%'))
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				and guideUser_id=#{guideUser.id}
+			</if>
+			<if test="guideUser != null and guideUser.username != null and guideUser.username != ''">
+				and guideUser_id in (select id from auth_user where username like CONCAT('%','${guideUser.username}','%'))
+			</if>
+			<if test="consumeCode != null and consumeCode != ''">
+				and consumeCode=#{consumeCode}
+			</if>
+			<if test="type != null and type != ''">
+				and type=#{type}
+			</if>
+			<if test="money != null and money != ''">
+				and money=#{money}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+		order by createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="Consume">
+		update th_consume
+		<set>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				customer_id=#{customer.id},
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				guideUser_id=#{guideUser.id},
+			</if>
+			<if test="consumeCode != null and consumeCode != ''">
+				consumeCode=#{consumeCode},
+			</if>
+			<if test="type != null and type != ''">
+				type=#{type},
+			</if>
+			<if test="money != null and money != ''">
+				money=#{money},
+			</if>
+			<if test="remark != null and remark != ''">
+				remark=#{remark},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+</mapper>

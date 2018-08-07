@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.address.dao.manual.AddressDAO">
+	<resultMap type="Address" id="resultAddress">
+		<id column="id" property="id" />
+		<result column="content" property="content" />
+		<result column="isDefault" property="isDefault" />
+		<result column="isDelete" property="isDelete" />
+		<result column="phone" property="phone" />
+		<result column="receiver" property="receiver" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="customer" column="customer_id" select="com.unitever.module.customer.dao.manual.CustomerDAO.get" />
+	</resultMap>
+
+	<select id="get" resultMap="resultAddress" parameterType="String">
+		select * from th_address
+		<where>
+			id=#{id}
+		</where>
+		and isDelete='1'
+	</select>
+
+	<select id="getAll" resultMap="resultAddress">
+		select * from th_address where isDelete='1' order by createTime desc
+	</select>
+<!-- 获取用户的收获地址 -->
+	<select id="getAddressByCustomerId" resultMap="resultAddress">
+		select * from th_address where customer_id=#{customerId} and isDelete='1' order by isDefault,createTime desc
+	</select>
+	
+<!-- 获取用户的默认收获地址 -->
+	<select id="getDefaultAddressByCustomerId" resultMap="resultAddress">
+		select * from th_address where customer_id=#{customerId} and isDelete='1' and isDefault='1' limit 0,1
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_address where id=#{id} and isDelete='1';
+	</delete>
+
+	<insert id="save" parameterType="Address">
+		insert into
+		th_address(id,customer_id,content,isDefault,isDelete,phone,receiver,createTime,ft,fu)
+		value(#{id},#{customer.id},#{content},#{isDefault},#{isDelete},#{phone},#{receiver},#{createTime},#{ft},#{fu})
+	</insert>
+
+	<select id="getCountByObject" resultType="Integer" parameterType="Address">
+		select count(*) From th_address
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				and customer_id=#{customer.id}
+			</if>
+			<if test="content != null and content != ''">
+				and content=#{content}
+			</if>
+			<if test="isDefault != null and isDefault != ''">
+				and isDefault=#{isDefault}
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			<if test="phone != null and phone != ''">
+				and phone=#{phone}
+			</if>
+			<if test="receiver != null and receiver != ''">
+				and receiver=#{receiver}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1'
+		</where>
+	</select>
+
+	<select id="getAddressByAddress" resultMap="resultAddress" parameterType="Address">
+		select * From th_address
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				and customer_id=#{customer.id}
+			</if>
+			<if test="content != null and content != ''">
+				and content=#{content}
+			</if>
+			<if test="isDefault != null and isDefault != ''">
+				and isDefault=#{isDefault}
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			<if test="phone != null and phone != ''">
+				and phone=#{phone}
+			</if>
+			<if test="receiver != null and receiver != ''">
+				and receiver=#{receiver}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1'
+		</where>
+		order by createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="Address">
+		update th_address
+		<set>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				customer_id=#{customer.id},
+			</if>
+			<if test="content != null and content != ''">
+				content=#{content},
+			</if>
+			<if test="isDefault != null and isDefault != ''">
+				isDefault=#{isDefault},
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				isDelete=#{isDelete},
+			</if>
+			<if test="phone != null and phone != ''">
+				phone=#{phone},
+			</if>
+			<if test="receiver != null and receiver != ''">
+				receiver=#{receiver},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id} and isDelete='1'
+	</update>
+<!-- 更新默认地址 -->	
+	<update id="selectIsDefault" >
+		update th_address
+		<set>
+			isDefault=#{isDefault},
+		</set>
+		WHERE id=#{addressId} and isDelete='1'
+	</update>
+
+</mapper>

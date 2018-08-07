@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.storeBonusDetail.dao.manual.StoreBonusDetailDAO">
+	<resultMap type="StoreBonusDetail" id="resultStoreBonusDetail">
+		<id column="id" property="id" />
+		<result column="targetMoney" property="targetMoney" />
+		<result column="money" property="money" />
+		<result column="month" property="month" />
+		<result column="sumMoney" property="sumMoney" />
+		<result column="sumTargetMoney" property="sumTargetMoney" />
+		<result column="isPayMoney" property="isPayMoney" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association column="store_id" property="store" select="com.unitever.module.store.dao.manual.StoreDAO.get" />
+	</resultMap>
+
+	<select id="get" resultMap="resultStoreBonusDetail" parameterType="String">
+		select * from th_store_bonus_detail
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultStoreBonusDetail">
+		select * from th_store_bonus_detail order by createTime desc
+	</select>
+	
+	<!-- 商家店业绩排行 -->
+	<select id="getGroupByStoreBonusDetailStoreMap" resultType="java.util.Map">
+		SELECT store.storeCode as storeCode,
+				store.name as storeName,
+				IFNULL(ROUND(SUM(targetMoney),2),0) as sumStoreTargetMoney,
+				IFNULL(ROUND(SUM(money),2),0)  as sumStoreMoney
+		from th_store_bonus_detail storeBonus,th_store store
+		where storeBonus.store_id=store.id
+			and month&gt;=#{startDate}
+			and month&lt;=#{endDate}
+			and isPayMoney='1'
+			GROUP BY storeBonus.store_id
+			order by sumStoreTargetMoney desc limit 0,10
+	</select>
+	
+	<!-- 商家店业绩排行 -->
+	<select id="getGroupByStoreBonusDetailStoreList" resultType="String">
+		SELECT store.storeCode as storeCode
+		from th_store_bonus_detail storeBonus,th_store store
+		where storeBonus.store_id=store.id
+			and month&gt;=#{startDate}
+			and month&lt;=#{endDate}
+			and isPayMoney='1'
+			GROUP BY storeBonus.store_id
+			order by IFNULL(ROUND(SUM(storeBonus.targetMoney),2),0) desc limit 0,10
+	</select>
+	
+	<!-- 商家店销售额统计 -->
+	<select id="getStoreBonusDetailTargetMoneySumMoney" resultType="String">
+		SELECT IFNULL(ROUND(SUM(targetMoney),2),0) 
+		from th_store_bonus_detail
+		where month&gt;=#{startDate}
+			and month&lt;=#{endDate}
+			<if test="storeId != null and storeId != ''">
+				and store_id=#{storeId}
+			</if>
+			and isPayMoney='1'
+	</select>
+	
+	<!-- 商家店服务费统计 -->
+	<select id="getStoreBonusDetailSumMoney" resultType="String">
+		SELECT IFNULL(ROUND(SUM(money),2),0) 
+		from th_store_bonus_detail
+		where month&gt;=#{startDate}
+			and month&lt;=#{endDate}
+			<if test="storeId != null and storeId != ''">
+				and store_id=#{storeId}
+			</if>
+			and isPayMoney='1'
+	</select>
+	
+<!-- 根据用户分组获取充值提成记录 -->
+	<select id="getStoreBonusDetailGroupByStore" resultMap="resultStoreBonusDetail">
+		select store_id,sum(money) as sumMoney,sum(targetMoney) as sumTargetMoney from th_store_bonus_detail
+		<where>
+			1=1
+			<if test="store != null and store.name != null and store.name != ''">
+				and store_id in (select id from th_store where name like CONCAT('%','${store.name}','%'))
+			</if>
+		</where>
+		group by store_id order by sumTargetMoney desc
+	</select>
+	
+<!-- 根据storeId获取提成记录详情 -->
+	<select id="getStoreBonusDetailByStoreId" resultMap="resultStoreBonusDetail">
+		select * from th_store_bonus_detail where store_id=#{storeId} order by createTime desc
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_store_bonus_detail where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="StoreBonusDetail">
+		insert into th_store_bonus_detail(id,targetMoney,store_id,createTime,ft,fu,money,month,isPayMoney)
+		value(#{id},#{targetMoney},#{store.id},#{createTime},#{ft},#{fu},#{money},#{month},#{isPayMoney})
+	</insert>
+
+	<select id="getCountByStoreBonusDetail" resultType="Integer" parameterType="StoreBonusDetail">
+		select count(*) From th_store_bonus_detail
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				and store_id=#{store.id}
+			</if>
+			<if test="targetMoney != null and targetMoney != ''">
+				and targetMoney=#{targetMoney}
+			</if>
+			<if test="money != null and money != ''">
+				and money=#{money}
+			</if>
+			<if test="month != null and month != ''">
+				and month=#{month}
+			</if>
+			<if test="isPayMoney != null and isPayMoney != ''">
+				and isPayMoney=#{isPayMoney}
+			</if>
+		</where>
+	</select>
+	
+	<select id="getCountByObject" resultType="Integer" parameterType="StoreBonusDetail">
+		select count(*) from(
+		select id From th_store_bonus_detail
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="store != null and store.name != null and store.name != ''">
+				and store_id in (select id from th_store where name like CONCAT('%','${store.name}','%'))
+			</if>
+			<if test="targetMoney != null and targetMoney != ''">
+				and targetMoney=#{targetMoney}
+			</if>
+			<if test="money != null and money != ''">
+				and money=#{money}
+			</if>
+			<if test="month != null and month != ''">
+				and month=#{month}
+			</if>
+			<if test="isPayMoney != null and isPayMoney != ''">
+				and isPayMoney=#{isPayMoney}
+			</if>
+			group by store_id
+		</where>) as count
+	</select>
+
+	<select id="getStoreBonusDetailByStoreBonusDetail" resultMap="resultStoreBonusDetail" parameterType="StoreBonusDetail">
+		select *,sum(money) as sumMoney,sum(targetMoney) as sumTargetMoney From th_store_bonus_detail
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="store != null and store.name != null and store.name != ''">
+				and store_id in (select id from th_store where name like CONCAT('%','${store.name}','%'))
+			</if>
+			<if test="targetMoney != null and targetMoney != ''">
+				and targetMoney=#{targetMoney}
+			</if>
+			<if test="money != null and money != ''">
+				and money=#{money}
+			</if>
+			<if test="month != null and month != ''">
+				and month=#{month}
+			</if>
+			<if test="isPayMoney != null and isPayMoney != ''">
+				and isPayMoney=#{isPayMoney}
+			</if>
+		</where>
+		group by store_id order by CAST(money as SIGNED)
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="StoreBonusDetail">
+		update th_store_bonus_detail
+		<set>
+			<if test="store != null and store.id != null and store.id != ''">
+				store_id=#{store.id},
+			</if>
+			<if test="targetMoney != null and targetMoney != ''">
+				targetMoney=#{targetMoney},
+			</if>
+			<if test="money != null and money != ''">
+				money=#{money},
+			</if>
+			<if test="month != null and month != ''">
+				month=#{month},
+			</if>
+			<if test="isPayMoney != null and isPayMoney != ''">
+				isPayMoney=#{isPayMoney},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+</mapper>

@@ -1,0 +1,1501 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.order.dao.manual.OrderDAO">
+	<resultMap type="Order" id="resultOrder">
+		<id column="id" property="id" />
+		<result column="code" property="code" />
+		<result column="type" property="type" />
+		<result column="payTime" property="payTime" />
+		<result column="reserveName" property="reserveName" />
+		<result column="reservePhone" property="reservePhone" />
+		<result column="reserveTime" property="reserveTime" />
+		<result column="reserveMoney" property="reserveMoney" />
+		<result column="lestMoney" property="lestMoney" />
+		<result column="state" property="state" />
+		<result column="sumMoney" property="sumMoney" />
+		<result column="sumNumber" property="sumNumber" />
+		<result column="eticketMoney" property="eticketMoney" />
+		<result column="subMoney" property="subMoney" />
+		<result column="cashierCode" property="cashierCode" />
+		<result column="payType" property="payType" />
+		<result column="leaveMessage" property="leaveMessage" />
+		<result column="receiverName" property="receiverName" />
+		<result column="receiverAddress" property="receiverAddress" />
+		<result column="receiverPhone" property="receiverPhone" />
+		<result column="expressName" property="expressName" />
+		<result column="expressPhone" property="expressPhone" />
+		<result column="proType" property="proType" />
+		<result column="inLinePayMoney" property="inLinePayMoney" />
+		<result column="payMoney" property="payMoney" />
+		<result column="subUserType" property="subUserType" />
+		<result column="oneReturnMoney" property="oneReturnMoney" />
+		<result column="onePayMoney" property="onePayMoney" />
+		<result column="onePayType" property="onePayType" />
+		<result column="onePayCode" property="onePayCode" />
+		<result column="twoPayMoney" property="twoPayMoney" />
+		<result column="twoPayType" property="twoPayType" />
+		<result column="twoPayCode" property="twoPayCode" />
+		<result column="twoPayTime" property="twoPayTime" />
+		<result column="twoCashierCode" property="twoCashierCode" />
+		<result column="twoReturnMoney" property="twoReturnMoney" />
+		<result column="returnMoney" property="returnMoney" />
+		<result column="returnWeChatPay" property="returnWeChatPay" />
+		<result column="returnAliPay" property="returnAliPay" />
+		<result column="returnCard" property="returnCard" />
+		<result column="returnTianhe" property="returnTianhe" />
+		<result column="remark" property="remark" />
+		<result column="batchCode" property="batchCode" />
+		<result column="postage" property="postage" />
+		<result column="logistics" property="logistics" />
+		<result column="logisticsCode" property="logisticsCode" />
+		<result column="isHide" property="isHide" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="customer" column="customer_id" select="com.unitever.module.customer.dao.manual.CustomerDAO.get" />
+		<association property="store" column="store_id" select="com.unitever.module.store.dao.manual.StoreDAO.get" />
+		<association property="order" column="order_id" select="com.unitever.module.order.dao.manual.OrderDAO.get" />
+		<association property="cashierUser" column="cashierUser_id" select="com.unitever.auth.user.dao.manual.UserDAO.get" />
+		<association property="guideUser" column="guideUser_id" select="com.unitever.auth.user.dao.manual.UserDAO.get" />
+		<association column="twoCashierUser_id" property="twoCashierUser" select="com.unitever.auth.user.dao.manual.UserDAO.get" />
+		<association column="id" property="qrcodeCount" select="com.unitever.module.orderGoodsQrcode.dao.manual.OrderGoodsQrcodeDAO.getCountQrcodeByOrderId" />
+		<collection property="orderList" column="id" select="com.unitever.module.order.dao.manual.OrderDAO.getOrderListByParentOrderId"/>
+		<collection property="orderGoodList" column="id" select="com.unitever.module.orderGoods.dao.manual.OrderGoodsDAO.getAllByOrderId"/>
+		<collection property="orderSubremarkList" column="id" select="com.unitever.module.orderSubremark.dao.manual.OrderSubremarkDAO.getAllByChildOrderId"/>
+		<collection property="eticketUseRecordList" column="id" select="com.unitever.module.eticketuseRecord.dao.manual.EticketUseRecordDAO.getEticketUseListByOrderId"/>
+	</resultMap>
+
+	<resultMap type="OrderVo" id="resultOrderVo">
+		<result column="batchCode" property="batchCode" />
+		<result column="state" property="state" />
+		<result column="type" property="type" />
+		<association property="customer" column="customer_id" select="com.unitever.module.customer.dao.manual.CustomerDAO.get" />
+		<collection property="orderList" column="batchCode" select="com.unitever.module.order.dao.manual.OrderDAO.getOrderByCode" />
+	</resultMap>
+
+	<select id="getOrderByCode" resultMap="resultOrder" parameterType="String">
+		select * from th_order
+		where batchCode=#{batchCode} and (order_id is null or order_id='') and isHide='2' and state != '7' and type='1'
+	</select>
+
+<!-- 获取所有未支付子订单（换货、同商品换货、退货、换够、赔偿） -->
+	<select id="getNoPayChildOrderIdList" resultType="String" parameterType="String">
+		select id from th_order
+		where order_id is not null and order_id!='' and (proType is null or proType='') and state='1'
+	</select>
+
+	<select id="getOrderGroupByBatchCodeByCustomerIdAndState" resultMap="resultOrderVo">
+		select * From (select * From
+			(select * From th_order where (order_id is null or order_id='') and state != '7' and type='1' order by state asc) as order_state 
+				GROUP BY order_state.batchCode) as order_code 
+				where order_code.customer_id=#{customerId}
+				<if test="state != null and state != ''">
+					<if test="state == '2'.toString()">
+						and (state='2' or state='3')
+					</if>
+					<if test="state != '2'.toString()">
+						and state=#{state}
+					</if>
+				</if>
+	</select>
+
+	<select id="get" resultMap="resultOrder" parameterType="String">
+		select * from th_order
+		<where>
+			id=#{id}
+		</where>
+		order by createTime asc
+	</select>
+
+	<select id="getAll" resultMap="resultOrder">
+		select * from th_order order by createTime desc
+	</select>
+
+	<select id="getFourStateOrderByFifteen" resultMap="resultOrder">
+		select * from th_order where state='4' and (order_id is null or order_id='') and type='1'
+		and lt&lt;=(select date_sub(now(),INTERVAL 15 DAY))
+	</select>
+
+	<!-- 根据商家店Id获取销售额 -->
+	<select id="getOneOrderMoneyByStoreInLastMonth" resultType="String">
+		select IFNULL(ROUND(SUM(onePayMoney),2),'0.0') from th_order where store_id=#{storeId} and (proType is null or proType='') and (state='6' or state='2')
+		and payTime&gt;=(select date_sub(date_sub(date_format(now(),'%y-%m-%d'),interval extract(day from now())-1 day),interval 1 month))
+		and payTime&lt;=(select date_sub(date_sub(date_format(now(),'%y-%m-%d'),interval extract(day from now()) day),interval 0 month) as date)
+	</select>
+
+	<!-- 根据导购获取上月的销售总金额 -->
+	<select id="getOneOrderMoneyByGuideUserInLastMonth" resultType="String">
+		select IFNULL(ROUND(SUM(onePayMoney),2),'0.0') from th_order where guideUser_id=#{guideUserId} and (cashierCode is not null and cashierCode!='') and (proType is null or proType='')
+		and payTime&gt;=(select date_sub(date_sub(date_format(now(),'%y-%m-%d'),interval extract(day from now())-1 day),interval 1 month))
+		and payTime&lt;=(select date_sub(date_sub(date_format(now(),'%y-%m-%d'),interval extract(day from now()) day),interval 0 month) as date)
+	</select>
+	
+	<!-- 根据导购获取上月的销售总金额 -->
+	<select id="getTwoOrderMoneyByGuideUserInLastMonth" resultType="String">
+		select IFNULL(ROUND(SUM(twoPayMoney),2),'0.0') from th_order where guideUser_id=#{guideUserId} and (cashierCode is not null and cashierCode!='') and (proType is null or proType='')
+		and twoPayTime&gt;=(select date_sub(date_sub(date_format(now(),'%y-%m-%d'),interval extract(day from now())-1 day),interval 1 month))
+		and twoPayTime&lt;=(select date_sub(date_sub(date_format(now(),'%y-%m-%d'),interval extract(day from now()) day),interval 0 month) as date)
+	</select>
+
+
+<!-- 交接班-现金首次支付统计 -->
+	<select id="getMoneyPayOnyCountMap" resultType="java.util.Map">
+		SELECT store.storeCode as storeCode,
+			store.name as storeName,
+			store.type as storeType,
+			COUNT(order_.id) as orderNumber,
+			ROUND(SUM(order_.onePayMoney),2) as oneGetMonet
+		from th_order order_,
+			th_store store
+		where store.id=order_.store_id
+			and order_.onePayType='1'
+		 	and order_.cashierUser_id=#{cashierUser_id}
+		 	and order_.payTime&gt;=#{start_time}
+			and order_.payTime&lt;=#{end_time}
+			and (order_.cashierCode is not null or order_.cashierCode!='')
+			and (order_.proType is null or order_.proType='')
+			and order_.type!='5'
+			and order_.type!='1'
+			and order_.type!='7'
+			and ROUND(onePayMoney,2)&gt;0
+		GROUP BY store.storeCode;
+	</select>
+
+<!-- 交接班-现金二次支付统计 -->
+	<select id="getMoneyPayTwoCountMap" resultType="java.util.Map">
+		SELECT store.storeCode as storeCode,
+			store.name as storeName,
+			store.type as storeType,
+			COUNT(order_.id) as orderNumber,
+			ROUND(SUM(order_.twoPayMoney),2) as twoGetMoney
+		from th_order order_,
+			th_store store
+		where store.id=order_.store_id
+			and order_.twoPayType='1'
+			and order_.twoCashierUser_id=#{cashierUser_id}
+			and order_.twoPayTime&gt;=#{start_time}
+			and order_.twoPayTime&lt;=#{end_time}
+			and (order_.twoCashierCode is not null or order_.twoCashierCode!='')
+			and (order_.proType is null or order_.proType='')
+			and order_.type!='5'
+			and order_.type!='1'
+			and order_.type!='7'
+		GROUP BY store.storeCode;
+	</select>
+
+<!-- 交接班-银行卡首次支付统计 -->
+	<select id="getCardPayOnyCountMap" resultType="java.util.Map">
+		SELECT store.storeCode as storeCode,
+			store.name as storeName,
+			store.type as storeType,
+			COUNT(order_.id) as orderNumber,
+			ROUND(SUM(order_.onePayMoney),2) as oneGetMonet
+		from th_order order_,
+			th_store store
+		where store.id=order_.store_id
+			and order_.onePayType='2'
+		 	and order_.cashierUser_id=#{cashierUser_id}
+		 	and order_.payTime&gt;=#{start_time}
+			and order_.payTime&lt;=#{end_time}
+			and (order_.cashierCode is not null or order_.cashierCode!='')
+			and (order_.proType is null or order_.proType='')
+			and order_.type!='5'
+			and order_.type!='1'
+			and order_.type!='7'
+		GROUP BY store.storeCode;
+	</select>
+
+<!-- 交接班-银行卡二次支付统计 -->
+	<select id="getCardPayTwoCountMap" resultType="java.util.Map">
+		SELECT store.storeCode as storeCode,
+			store.name as storeName,
+			store.type as storeType,
+			COUNT(order_.id) as orderNumber,
+			ROUND(SUM(order_.twoPayMoney),2) as twoGetMoney
+		from th_order order_,
+			th_store store
+		where store.id=order_.store_id
+			and order_.twoPayType='2'
+		 	and order_.twoCashierUser_id=#{cashierUser_id}
+		 	and order_.twoPayTime&gt;=#{start_time}
+			and order_.twoPayTime&lt;=#{end_time}
+			and (order_.twoCashierCode is not null or order_.twoCashierCode!='')
+			and (order_.proType is null or order_.proType='')
+			and order_.type!='5'
+			and order_.type!='1'
+			and order_.type!='7'
+		GROUP BY store.storeCode;
+	</select>
+
+<!-- 交接班-微信支付首次支付统计 -->
+	<select id="getWeChatPayOnyCountMap" resultType="java.util.Map">
+		SELECT store.storeCode as storeCode,
+			store.name as storeName,
+			store.type as storeType,
+			COUNT(order_.id) as orderNumber,
+			ROUND(SUM(order_.onePayMoney),2) as onePayMoney
+		from th_order order_,
+			th_store store
+		where store.id=order_.store_id
+			and order_.onePayType='3'
+		 	and order_.cashierUser_id=#{cashierUser_id}
+		 	and order_.payTime&gt;=#{start_time}
+			and order_.payTime&lt;=#{end_time}
+			and (order_.cashierCode is not null or order_.cashierCode!='')
+			and (order_.proType is null or order_.proType='')
+			and order_.type!='5'
+			and order_.type!='1'
+			and order_.type!='7'
+		GROUP BY store.storeCode;
+	</select>
+
+<!-- 交接班-微信支付二次支付统计 -->
+	<select id="getWeChatPayTwoCountMap" resultType="java.util.Map">
+		SELECT store.storeCode as storeCode,
+			store.name as storeName,
+			store.type as storeType,
+			COUNT(order_.id) as orderNumber,
+			ROUND(SUM(order_.twoPayMoney),2) as twoPayMoney
+		from th_order order_,
+			th_store store
+		where store.id=order_.store_id
+			and order_.twoPayType='3'
+		 	and order_.twoCashierUser_id=#{cashierUser_id}
+		 	and order_.twoPayTime&gt;=#{start_time}
+			and order_.twoPayTime&lt;=#{end_time}
+			and (order_.twoCashierCode is not null or order_.twoCashierCode!='')
+			and (order_.proType is null or order_.proType='')
+			and order_.type!='5'
+			and order_.type!='1'
+			and order_.type!='7'
+		GROUP BY store.storeCode;
+	</select>
+
+<!-- 交接班-支付宝支付首次支付统计 -->
+	<select id="getAliPayOnyCountMap" resultType="java.util.Map">
+		SELECT store.storeCode as storeCode,
+			store.name as storeName,
+			store.type as storeType,
+			COUNT(order_.id) as orderNumber,
+			ROUND(SUM(order_.onePayMoney),2) as onePayMoney
+		from th_order order_,
+			th_store store
+		where store.id=order_.store_id
+			and order_.onePayType='4'
+		 	and order_.cashierUser_id=#{cashierUser_id}
+		 	and order_.payTime&gt;=#{start_time}
+			and order_.payTime&lt;=#{end_time}
+			and (order_.cashierCode is not null or order_.cashierCode!='')
+			and (order_.proType is null or order_.proType='')
+			and order_.type!='5'
+			and order_.type!='1'
+			and order_.type!='7'
+		GROUP BY store.storeCode;
+	</select>
+
+<!-- 交接班-支付宝支付二次支付统计 -->
+	<select id="getAliPayTwoCountMap" resultType="java.util.Map">
+		SELECT store.storeCode as storeCode,
+			store.name as storeName,
+			store.type as storeType,
+			COUNT(order_.id) as orderNumber,
+			ROUND(SUM(order_.twoPayMoney),2) as twoPayMoney
+		from th_order order_,
+			th_store store
+		where store.id=order_.store_id
+			and order_.twoPayType='4'
+		 	and order_.twoCashierUser_id=#{cashierUser_id}
+		 	and order_.twoPayTime&gt;=#{start_time}
+			and order_.twoPayTime&lt;=#{end_time}
+			and (order_.twoCashierCode is not null or order_.twoCashierCode!='')
+			and (order_.proType is null or order_.proType='')
+			and order_.type!='5'
+			and order_.type!='1'
+			and order_.type!='7'
+		GROUP BY store.storeCode;
+	</select>
+
+<!-- 交接班-天和会员余额支付首次支付统计 -->
+	<select id="getTianhePayOnyCountMap" resultType="java.util.Map">
+		SELECT store.storeCode as storeCode,
+			store.name as storeName,
+			store.type as storeType,
+			COUNT(order_.id) as orderNumber,
+			ROUND(SUM(order_.onePayMoney),2) as onePayMoney
+		from th_order order_,
+			th_store store
+		where store.id=order_.store_id
+			and order_.onePayType='5'
+		 	and order_.cashierUser_id=#{cashierUser_id}
+		 	and order_.payTime&gt;=#{start_time}
+			and order_.payTime&lt;=#{end_time}
+			and (order_.cashierCode is not null or order_.cashierCode!='')
+			and (order_.proType is null or order_.proType='')
+			and order_.type!='5'
+			and order_.type!='1'
+			and order_.type!='7'
+		GROUP BY store.storeCode;
+	</select>
+
+<!-- 交接班-天和会员余额支付二次支付统计 -->
+	<select id="getTianhePayTwoCountMap" resultType="java.util.Map">
+		SELECT store.storeCode as storeCode,
+			store.name as storeName,
+			store.type as storeType,
+			COUNT(order_.id) as orderNumber,
+			ROUND(SUM(order_.twoPayMoney),2) as twoPayMoney
+		from th_order order_,
+			th_store store
+		where store.id=order_.store_id
+			and order_.twoPayType='5'
+		 	and order_.twoCashierUser_id=#{cashierUser_id}
+		 	and order_.twoPayTime&gt;=#{start_time}
+			and order_.twoPayTime&lt;=#{end_time}
+			and (order_.twoCashierCode is not null or order_.twoCashierCode!='')
+			and (order_.proType is null or order_.proType='')
+			and order_.type!='5'
+			and order_.type!='1'
+			and order_.type!='7'
+		GROUP BY store.storeCode;
+	</select>
+
+<!-- 交接班-定金总计 -->
+	<select id="getDingjinCountMap" resultType="java.util.Map">
+		SELECT store.storeCode as storeCode,
+			store.name as storeName,
+			store.type as storeType,
+			ROUND(SUM(order_.onePayMoney),2) as onePayMoney
+		from th_order order_,
+			th_store store
+		where store.id=order_.store_id
+		 	and order_.cashierUser_id=#{cashierUser_id}
+		 	and order_.payTime&gt;=#{start_time}
+			and order_.payTime&lt;=#{end_time}
+			and (order_.cashierCode is not null or order_.cashierCode!='')
+			and (order_.proType is null or order_.proType='')
+			and order_.type='4'
+		GROUP BY store.storeCode;
+	</select>
+
+<!-- 交接班-尾款总计 -->
+	<select id="getWeikuanCountMap" resultType="java.util.Map">
+		SELECT store.storeCode as storeCode,
+			store.name as storeName,
+			store.type as storeType,
+			ROUND(SUM(order_.twoPayMoney),2) as twoPayMoney
+		from th_order order_,
+			th_store store
+		where store.id=order_.store_id
+		 	and order_.twoCashierUser_id=#{cashierUser_id}
+		 	and order_.twoPayTime&gt;=#{start_time}
+			and order_.twoPayTime&lt;=#{end_time}
+			and (order_.twoCashierCode is not null or order_.twoCashierCode!='')
+			and (order_.proType is null or order_.proType='')
+			and order_.type='4'
+		GROUP BY store.storeCode;
+	</select>
+
+<!-- 交接班-退款总计 -->
+	<select id="getReturnMoneyCountMap" resultType="java.util.Map">
+		SELECT store.storeCode as storeCode,
+			store.name as storeName,
+			store.type as storeType,
+			COUNT(order_.id) as orderNumber,
+			ROUND(SUM(order_.onePayMoney),2) as onePayMoney
+		from th_order order_,
+			th_store store
+		where store.id=order_.store_id
+		 	and order_.cashierUser_id=#{cashierUser_id}
+		 	and order_.payTime&gt;=#{start_time}
+			and order_.payTime&lt;=#{end_time}
+			and (order_.cashierCode is not null or order_.cashierCode!='')
+			and (order_.proType is null or order_.proType='')
+			and order_.type='5'
+		GROUP BY store.storeCode;
+	</select>
+
+<!-- 获取所有门店code -->
+	<select id="getStoreCodeList" resultType="String">
+		select DISTINCT store.storeCode 
+		FROM th_order order_,th_store store 
+		where store.id=order_.store_id 
+			and order_.type!='1'
+			and order_.type!='7'
+			and (
+				(order_.payTime&gt;=#{start_time} and order_.payTime&lt;=#{end_time} and order_.cashierUser_id=#{cashierUser_id})
+				or
+				(order_.twoPayTime&gt;=#{start_time} and order_.twoPayTime&lt;=#{end_time} and order_.twoCashierUser_id=#{cashierUser_id})
+			)
+	</select>
+
+<!-- 通过BatchCode获取订单IdList -->
+	<select id="getOrderIdListByBatchCode" resultType="String">
+		select id from th_order where batchCode=#{batchCode}
+	</select>
+	
+<!-- 通过BatchCode获取订单List -->
+	<select id="getOrderByBatchCode" resultMap="resultOrder">
+		select * from th_order where batchCode=#{batchCode}
+	</select>
+	
+<!-- 通过订单ID串获取订单列表 -->
+	<select id="getOrderByIdString" resultMap="resultOrder">
+		select * from th_order where 0&lt;INSTR(#{orderIdString},id) order by createTime desc
+	</select>
+	
+	<!-- 依据orderCode获取订单信息(未支付) -->
+	<select id="getNoPayOrderByOrderCode" resultMap="resultOrder">
+		select * from th_order where code=#{orderCode} and state='1'
+	</select>
+	
+	<!-- 依据orderCode获取订单信息(完成的) -->
+	<select id="getFinishOrderByOrderCode" resultMap="resultOrder">
+		select * from th_order where code=#{orderCode} and state='6'
+	</select>
+	
+	<!-- 依据orderCode获取订单信息(支付成功的) -->
+	<select id="getPaySuccessOrderByOrderCode" resultMap="resultOrder">
+		select * from th_order where code=#{orderCode} and (state='2' or state='3' or state='4' or state='5' or state='6' )
+	</select>
+	
+	<!-- 依据orderCode和qrcodeID获取换购订单信息 -->
+	<select id="getThreeOrderByOrderCodeAndQrcodeId" resultMap="resultOrder">
+		select * from th_order where order_id in 
+			(select id from th_order where code=#{orderCode} and state='6') 
+				and type='3' 
+				and id in 
+					(SELECT order_id from th_order_goods where id in 
+						(select order_goods_id from th_order_goods_qrcode where qrcode_id=#{qrcodeId} )) order by createTime desc limit 0,1
+	</select>
+	
+	<!-- 获取主订单下的子订单 -->
+	<select id="getOrderListByParentOrderId" resultMap="resultOrder">
+		select * from th_order where order_id=#{id} order by createTime asc
+	</select>
+	
+	<!-- 根据qrcodeId获取主订单 -->
+	<select id="getOrderByQrcodeId" resultMap="resultOrder">
+		select * from th_order where id=(
+			select order_id from th_order where id in
+				(select order_id from th_order_goods where type='1' and id in
+					(select order_goods_id from th_order_goods_qrcode where qrcode_id=#{qrcodeId})) order by createTime desc limit 0,1) order by createTime desc limit 0,1
+	</select>
+	
+	<!-- 根据qrcodeId获取赔偿 -->
+	<select id="getEightOrderCountByQrcodeId" resultType="String">
+		select count(*) from th_order where type='8' and id in (
+			select order_id
+			from th_order_goods
+			where id in (
+					select order_goods_id
+					from th_order_goods_qrcode
+					where qrcode_id=#{qrcodeId}
+				)
+		)
+	</select>
+	
+	<!-- 根据qrcodeId获取换够 -->
+	<select id="getThreeOrderCountByQrcodeId" resultType="String">
+		select count(*) from th_order where type='3' and id in (
+			select order_id
+			from th_order_goods
+			where id in (
+					select order_goods_id
+					from th_order_goods_qrcode
+					where qrcode_id=#{qrcodeId}
+				)
+		)
+	</select>
+	
+	<!-- 根据qrcodeId获取换够 -->
+	<select id="getThreeOrderByOrderId" resultMap="resultOrder">
+		select * from th_order where type='3' and order_id=#{orderId}
+	</select>
+	
+	<!-- 根据用户获取所有订单 -->
+	<select id="getOrderByCustomerId" resultMap="resultOrder">
+		select * from th_order where customer_id=#{customerId} and (order_id is null or order_id='') order by createTime desc
+	</select>
+	
+	<!-- 根据用户获取某一类订单 -->
+	<select id="getOrderByCustomerIdAndState" resultMap="resultOrder">
+		select * from th_order where customer_id=#{customerId} and (order_id is null or order_id='')
+		<if test="state != null and state != ''">
+			<if test="state == '2'">
+				and (state='2' or state='3')
+			</if>
+			<if test="state != '2'">
+				and state=#{state}
+			</if>
+		</if>
+		and state!='7' and type='1'
+		order by createTime desc
+	</select>
+	
+	<!-- 根据用户获取线上购买量 -->
+	<select id="getUpSumNumberByCustomerId" resultType="String">
+		select ROUND(SUM(sumNumber),0) from th_order where customer_id=#{customerId} and type='1' and (order_id is null or order_id='') and state='6'
+	</select>
+	<!-- 根据用户获取线上消费额 -->
+	<select id="getUpPayMoneyByCustomerId" resultType="String" >
+		select ROUND(SUM(PayMoney),2) from th_order where customer_id=#{customerId} and type='1' and (order_id is null or order_id='') and state='6'
+	</select>
+	<!-- 根据用户获取线下购买量 -->
+	<select id="getDownSumNumberByCustomerId" resultType="String">
+		select ROUND(SUM(sumNumber),0) from th_order where customer_id=#{customerId} and (type='2' or type='3' or type='4' or type='8') and (order_id is null or order_id='') and state='6'
+	</select>
+	<!-- 根据用户获取线下消费额 -->
+	<select id="getDownPayMoneyByCustomerId" resultType="String">
+		select ROUND(SUM(PayMoney),2) from th_order where customer_id=#{customerId} and (type='2' or type='3' or type='4' or type='8') and (order_id is null or order_id='') and state='6'
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_order where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="Order">
+		insert into
+		th_order(id,customer_id,store_id,cashierUser_id,guideUser_id,order_id,code,proType,payMoney,onePayType,
+				inLinePayMoney,type,payTime,reserveName,reservePhone,reserveTime,reserveMoney,subUserType,remark,
+				state,sumMoney,sumNumber,eticketMoney,subMoney,cashierCode,payType,leaveMessage,oneReturnMoney,
+				receiverName,receiverAddress,receiverPhone,expressName,expressPhone,createTime,lestMoney,ft,fu,
+				onePayMoney,twoPayMoney,twoReturnMoney,twoPayType,batchCode,postage,logistics,logisticsCode,isHide)
+		value(#{id},#{customer.id},#{store.id},#{cashierUser.id},#{guideUser.id},#{order.id},#{code},#{proType},#{payMoney},#{onePayType},
+				#{inLinePayMoney},#{type},#{payTime},#{reserveName},#{reservePhone},#{reserveTime},#{reserveMoney},#{subUserType},#{remark},
+				#{state},#{sumMoney},#{sumNumber},#{eticketMoney},#{subMoney},#{cashierCode},#{payType},#{leaveMessage},#{oneReturnMoney},
+				#{receiverName},#{receiverAddress},#{receiverPhone},#{expressName},#{expressPhone},#{createTime},#{lestMoney},#{ft},#{fu},
+				#{onePayMoney},#{twoPayMoney},#{twoReturnMoney},#{twoPayType},#{batchCode},#{postage},#{logistics},#{logisticsCode},'2')
+	</insert>
+
+	<select id="getCountByOrder" resultType="Integer" parameterType="Order">
+		select count(*) From th_order
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				and customer_id=#{customer.id}
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				and store_id=#{store.id}
+			</if>
+			<if test="cashierUser != null and cashierUser.id != null and cashierUser.id != ''">
+				and cashierUser_id=#{cashierUser.id}
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				and guideUser_id=#{guideUser.id}
+			</if>
+			<if test="order != null and order.id != null and order.id != ''">
+				and order_id=#{order.id}
+			</if>
+			<if test="code != null and code != ''">
+				and code=#{code}
+			</if>
+			<if test="type != null and type != ''">
+				and type=#{type}
+			</if>
+			<if test="proType != null and proType != ''">
+				and proType=#{proType}
+			</if>
+			<if test="payTime != null and payTime != ''">
+				and payTime=#{payTime}
+			</if>
+			<if test="reserveName != null and reserveName != ''">
+				and reserveName=#{reserveName}
+			</if>
+			<if test="reservePhone != null and reservePhone != ''">
+				and reservePhone=#{reservePhone}
+			</if>
+			<if test="reserveTime != null and reserveTime != ''">
+				and reserveTime=#{reserveTime}
+			</if>
+			<if test="reserveMoney != null and reserveMoney != ''">
+				and reserveMoney=#{reserveMoney}
+			</if>
+			<if test="inLinePayMoney != null and inLinePayMoney != ''">
+				and inLinePayMoney=#{inLinePayMoney}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="cashierCode != null and cashierCode != ''">
+				and cashierCode=#{cashierCode}
+			</if>
+			<if test="payType != null and payType != ''">
+				and payType=#{payType}
+			</if>
+			<if test="subUserType != null and subUserType != ''">
+				and subUserType=#{subUserType}
+			</if>
+			<if test="leaveMessage != null and leaveMessage != ''">
+				and leaveMessage=#{leaveMessage}
+			</if>
+			<if test="receiverName != null and receiverName != ''">
+				and receiverName=#{receiverName}
+			</if>
+			<if test="receiverAddress != null and receiverAddress != ''">
+				and receiverAddress=#{receiverAddress}
+			</if>
+			<if test="receiverPhone != null and receiverPhone != ''">
+				and receiverPhone=#{receiverPhone}
+			</if>
+			<if test="expressName != null and expressName != ''">
+				and expressName=#{expressName}
+			</if>
+			<if test="expressPhone != null and expressPhone != ''">
+				and expressPhone=#{expressPhone}
+			</if>
+			<if test="batchCode != null and batchCode != ''">
+				and batchCode=#{batchCode}
+			</if>
+			<if test="postage != null and postage != ''">
+				and postage=#{postage}
+			</if>
+			<if test="logistics != null and logistics != ''">
+				and logistics=#{logistics}
+			</if>
+			<if test="logisticsCode != null and logisticsCode != ''">
+				and logisticsCode=#{logisticsCode}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isHide='2'
+		</where>
+	</select>
+
+	<select id="getOrderByOrder" resultMap="resultOrder" parameterType="Order">
+		select * From th_order
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				and customer_id=#{customer.id}
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				and store_id=#{store.id}
+			</if>
+			<if test="cashierUser != null and cashierUser.id != null and cashierUser.id != ''">
+				and cashierUser_id=#{cashierUser.id}
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				and guideUser_id=#{guideUser.id}
+			</if>
+			<if test="order != null and order.id != null and order.id != ''">
+				and order_id=#{order.id}
+			</if>
+			<if test="code != null and code != ''">
+				and code=#{code}
+			</if>
+			<if test="proType != null and proType != ''">
+				and proType=#{proType}
+			</if>
+			<if test="type != null and type != ''">
+				and type=#{type}
+			</if>
+			<if test="payTime != null and payTime != ''">
+				and payTime=#{payTime}
+			</if>
+			<if test="reserveName != null and reserveName != ''">
+				and reserveName=#{reserveName}
+			</if>
+			<if test="reservePhone != null and reservePhone != ''">
+				and reservePhone=#{reservePhone}
+			</if>
+			<if test="reserveTime != null and reserveTime != ''">
+				and reserveTime=#{reserveTime}
+			</if>
+			<if test="reserveMoney != null and reserveMoney != ''">
+				and reserveMoney=#{reserveMoney}
+			</if>
+			<if test="inLinePayMoney != null and inLinePayMoney != ''">
+				and inLinePayMoney=#{inLinePayMoney}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="cashierCode != null and cashierCode != ''">
+				and cashierCode=#{cashierCode}
+			</if>
+			<if test="payType != null and payType != ''">
+				and payType=#{payType}
+			</if>
+			<if test="subUserType != null and subUserType != ''">
+				and subUserType=#{subUserType}
+			</if>
+			<if test="leaveMessage != null and leaveMessage != ''">
+				and leaveMessage=#{leaveMessage}
+			</if>
+			<if test="receiverName != null and receiverName != ''">
+				and receiverName=#{receiverName}
+			</if>
+			<if test="receiverAddress != null and receiverAddress != ''">
+				and receiverAddress=#{receiverAddress}
+			</if>
+			<if test="receiverPhone != null and receiverPhone != ''">
+				and receiverPhone=#{receiverPhone}
+			</if>
+			<if test="expressName != null and expressName != ''">
+				and expressName=#{expressName}
+			</if>
+			<if test="expressPhone != null and expressPhone != ''">
+				and expressPhone=#{expressPhone}
+			</if>
+			<if test="batchCode != null and batchCode != ''">
+				and batchCode=#{batchCode}
+			</if>
+			<if test="postage != null and postage != ''">
+				and postage=#{postage}
+			</if>
+			<if test="logistics != null and logistics != ''">
+				and logistics=#{logistics}
+			</if>
+			<if test="logisticsCode != null and logisticsCode != ''">
+				and logisticsCode=#{logisticsCode}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+		and isHide='2'
+		order by createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+	
+	<select id="getCountByObject" resultType="Integer" parameterType="Order">
+		select count(*) From th_order
+		<where>
+			1=1
+			<if test="type == null or type == ''">
+				and (type='1' or type='2' or type='4')
+			</if>
+			<if test="type != null and type != ''">
+				and type=#{type}
+			</if>
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				and customer_id=#{customer.id}
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				and store_id=#{store.id}
+			</if>
+			<if test="cashierUser != null and cashierUser.id != null and cashierUser.id != ''">
+				and cashierUser_id=#{cashierUser.id}
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				and guideUser_id=#{guideUser.id}
+			</if>
+			<if test="code != null and code != ''">
+				and code=#{code}
+			</if>
+			<if test="proType != null and proType != ''">
+				and proType=#{proType}
+			</if>
+			<if test="payTime != null and payTime != ''">
+				and payTime=#{payTime}
+			</if>
+			<if test="reserveName != null and reserveName != ''">
+				and reserveName=#{reserveName}
+			</if>
+			<if test="reservePhone != null and reservePhone != ''">
+				and reservePhone=#{reservePhone}
+			</if>
+			<if test="reserveTime != null and reserveTime != ''">
+				and reserveTime=#{reserveTime}
+			</if>
+			<if test="reserveMoney != null and reserveMoney != ''">
+				and reserveMoney=#{reserveMoney}
+			</if>
+			<if test="inLinePayMoney != null and inLinePayMoney != ''">
+				and inLinePayMoney=#{inLinePayMoney}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="cashierCode != null and cashierCode != ''">
+				and cashierCode=#{cashierCode}
+			</if>
+			<if test="payType != null and payType != ''">
+				and payType=#{payType}
+			</if>
+			<if test="subUserType != null and subUserType != ''">
+				and subUserType=#{subUserType}
+			</if>
+			<if test="leaveMessage != null and leaveMessage != ''">
+				and leaveMessage=#{leaveMessage}
+			</if>
+			<if test="receiverName != null and receiverName != ''">
+				and receiverName=#{receiverName}
+			</if>
+			<if test="receiverAddress != null and receiverAddress != ''">
+				and receiverAddress=#{receiverAddress}
+			</if>
+			<if test="receiverPhone != null and receiverPhone != ''">
+				and receiverPhone=#{receiverPhone}
+			</if>
+			<if test="expressName != null and expressName != ''">
+				and expressName=#{expressName}
+			</if>
+			<if test="expressPhone != null and expressPhone != ''">
+				and expressPhone=#{expressPhone}
+			</if>
+			<if test="batchCode != null and batchCode != ''">
+				and batchCode=#{batchCode}
+			</if>
+			<if test="postage != null and postage != ''">
+				and postage=#{postage}
+			</if>
+			<if test="logistics != null and logistics != ''">
+				and logistics=#{logistics}
+			</if>
+			<if test="logisticsCode != null and logisticsCode != ''">
+				and logisticsCode=#{logisticsCode}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and (order_id is null or order_id='')
+			and isHide='2'
+		</where>
+	</select>
+	
+	<select id="getParentOrderByParentOrder" resultMap="resultOrder" parameterType="Order">
+		select * From th_order
+		<where>
+			1=1
+			<if test="type == null or type == ''">
+				and (type='1' or type='2' or type='4')
+			</if>
+			<if test="type != null and type != ''">
+				and type=#{type}
+			</if>
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				and customer_id=#{customer.id}
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				and store_id=#{store.id}
+			</if>
+			<if test="cashierUser != null and cashierUser.id != null and cashierUser.id != ''">
+				and cashierUser_id=#{cashierUser.id}
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				and guideUser_id=#{guideUser.id}
+			</if>
+			<if test="code != null and code != ''">
+				and code=#{code}
+			</if>
+			<if test="proType != null and proType != ''">
+				and proType=#{proType}
+			</if>
+			<if test="payTime != null and payTime != ''">
+				and payTime=#{payTime}
+			</if>
+			<if test="reserveName != null and reserveName != ''">
+				and reserveName=#{reserveName}
+			</if>
+			<if test="reservePhone != null and reservePhone != ''">
+				and reservePhone=#{reservePhone}
+			</if>
+			<if test="reserveTime != null and reserveTime != ''">
+				and reserveTime=#{reserveTime}
+			</if>
+			<if test="reserveMoney != null and reserveMoney != ''">
+				and reserveMoney=#{reserveMoney}
+			</if>
+			<if test="inLinePayMoney != null and inLinePayMoney != ''">
+				and inLinePayMoney=#{inLinePayMoney}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="cashierCode != null and cashierCode != ''">
+				and cashierCode=#{cashierCode}
+			</if>
+			<if test="payType != null and payType != ''">
+				and payType=#{payType}
+			</if>
+			<if test="subUserType != null and subUserType != ''">
+				and subUserType=#{subUserType}
+			</if>
+			<if test="leaveMessage != null and leaveMessage != ''">
+				and leaveMessage=#{leaveMessage}
+			</if>
+			<if test="receiverName != null and receiverName != ''">
+				and receiverName=#{receiverName}
+			</if>
+			<if test="receiverAddress != null and receiverAddress != ''">
+				and receiverAddress=#{receiverAddress}
+			</if>
+			<if test="receiverPhone != null and receiverPhone != ''">
+				and receiverPhone=#{receiverPhone}
+			</if>
+			<if test="expressName != null and expressName != ''">
+				and expressName=#{expressName}
+			</if>
+			<if test="expressPhone != null and expressPhone != ''">
+				and expressPhone=#{expressPhone}
+			</if>
+			<if test="batchCode != null and batchCode != ''">
+				and batchCode=#{batchCode}
+			</if>
+			<if test="postage != null and postage != ''">
+				and postage=#{postage}
+			</if>
+			<if test="logistics != null and logistics != ''">
+				and logistics=#{logistics}
+			</if>
+			<if test="logisticsCode != null and logisticsCode != ''">
+				and logisticsCode=#{logisticsCode}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and (order_id is null or order_id='')
+			and isHide='2'
+		</where>
+		order by createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+	
+	<!-- 根据支付方式(微信/支付宝)获取订单 -->
+	<select id="getCountOrderByPayType" resultType="Integer" parameterType="Order">
+		select Count(*) From th_order
+		<where>
+			1=1
+			<if test="type != null and type != ''">
+				and type=#{type}
+			</if>
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				and customer_id=#{customer.id}
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				and store_id=#{store.id}
+			</if>
+			<if test="cashierUser != null and cashierUser.id != null and cashierUser.id != ''">
+				and cashierUser_id=#{cashierUser.id}
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				and guideUser_id=#{guideUser.id}
+			</if>
+			<if test="code != null and code != ''">
+				and code=#{code}
+			</if>
+			<if test="proType != null and proType != ''">
+				and proType=#{proType}
+			</if>
+			<if test="payTime != null and payTime != ''">
+				and payTime=#{payTime}
+			</if>
+			<if test="reserveName != null and reserveName != ''">
+				and reserveName=#{reserveName}
+			</if>
+			<if test="reservePhone != null and reservePhone != ''">
+				and reservePhone=#{reservePhone}
+			</if>
+			<if test="reserveTime != null and reserveTime != ''">
+				and reserveTime=#{reserveTime}
+			</if>
+			<if test="reserveMoney != null and reserveMoney != ''">
+				and reserveMoney=#{reserveMoney}
+			</if>
+			<if test="inLinePayMoney != null and inLinePayMoney != ''">
+				and inLinePayMoney=#{inLinePayMoney}
+			</if>
+			
+				<if test="type == '4'">
+					and (cashierCode is not null and cashierCode!='')
+				</if>
+				<if test="type != '4'">
+					and state!='1' and state!='7'
+				</if>
+				
+			<if test="payType != null and payType != ''">
+				and payType=#{payType}
+			</if>
+			
+				and (onePayType='3' or onePayType='4' or twoPayType='3' or twoPayType='4')
+				
+			<if test="subUserType != null and subUserType != ''">
+				and subUserType=#{subUserType}
+			</if>
+			<if test="leaveMessage != null and leaveMessage != ''">
+				and leaveMessage=#{leaveMessage}
+			</if>
+			<if test="receiverName != null and receiverName != ''">
+				and receiverName=#{receiverName}
+			</if>
+			<if test="receiverAddress != null and receiverAddress != ''">
+				and receiverAddress=#{receiverAddress}
+			</if>
+			<if test="receiverPhone != null and receiverPhone != ''">
+				and receiverPhone=#{receiverPhone}
+			</if>
+			<if test="expressName != null and expressName != ''">
+				and expressName=#{expressName}
+			</if>
+			<if test="expressPhone != null and expressPhone != ''">
+				and expressPhone=#{expressPhone}
+			</if>
+			<if test="batchCode != null and batchCode != ''">
+				and batchCode=#{batchCode}
+			</if>
+			<if test="postage != null and postage != ''">
+				and postage=#{postage}
+			</if>
+			<if test="logistics != null and logistics != ''">
+				and logistics=#{logistics}
+			</if>
+			<if test="logisticsCode != null and logisticsCode != ''">
+				and logisticsCode=#{logisticsCode}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+		and isHide='2'
+		and (proType is null or proType='')
+	</select>
+	<!-- 根据支付方式(微信/支付宝)获取订单 -->
+	<select id="getOrderByPayType" resultMap="resultOrder" parameterType="Order">
+		select * From th_order
+		<where>
+			1=1
+			<if test="type != null and type != ''">
+				and type=#{type}
+			</if>
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				and customer_id=#{customer.id}
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				and store_id=#{store.id}
+			</if>
+			<if test="cashierUser != null and cashierUser.id != null and cashierUser.id != ''">
+				and cashierUser_id=#{cashierUser.id}
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				and guideUser_id=#{guideUser.id}
+			</if>
+			<if test="code != null and code != ''">
+				and code=#{code}
+			</if>
+			<if test="proType != null and proType != ''">
+				and proType=#{proType}
+			</if>
+			<if test="payTime != null and payTime != ''">
+				and payTime=#{payTime}
+			</if>
+			<if test="reserveName != null and reserveName != ''">
+				and reserveName=#{reserveName}
+			</if>
+			<if test="reservePhone != null and reservePhone != ''">
+				and reservePhone=#{reservePhone}
+			</if>
+			<if test="reserveTime != null and reserveTime != ''">
+				and reserveTime=#{reserveTime}
+			</if>
+			<if test="reserveMoney != null and reserveMoney != ''">
+				and reserveMoney=#{reserveMoney}
+			</if>
+			<if test="inLinePayMoney != null and inLinePayMoney != ''">
+				and inLinePayMoney=#{inLinePayMoney}
+			</if>
+			
+				<if test="type == '4'">
+					and (cashierCode is not null and cashierCode!='')
+				</if>
+				<if test="type != '4'">
+					and state!='1' and state!='7'
+				</if>
+				
+			<if test="payType != null and payType != ''">
+				and payType=#{payType}
+			</if>
+			
+				and (onePayType='3' or onePayType='4' or twoPayType='3' or twoPayType='4')
+				
+			<if test="subUserType != null and subUserType != ''">
+				and subUserType=#{subUserType}
+			</if>
+			<if test="leaveMessage != null and leaveMessage != ''">
+				and leaveMessage=#{leaveMessage}
+			</if>
+			<if test="receiverName != null and receiverName != ''">
+				and receiverName=#{receiverName}
+			</if>
+			<if test="receiverAddress != null and receiverAddress != ''">
+				and receiverAddress=#{receiverAddress}
+			</if>
+			<if test="receiverPhone != null and receiverPhone != ''">
+				and receiverPhone=#{receiverPhone}
+			</if>
+			<if test="expressName != null and expressName != ''">
+				and expressName=#{expressName}
+			</if>
+			<if test="expressPhone != null and expressPhone != ''">
+				and expressPhone=#{expressPhone}
+			</if>
+			<if test="batchCode != null and batchCode != ''">
+				and batchCode=#{batchCode}
+			</if>
+			<if test="postage != null and postage != ''">
+				and postage=#{postage}
+			</if>
+			<if test="logistics != null and logistics != ''">
+				and logistics=#{logistics}
+			</if>
+			<if test="logisticsCode != null and logisticsCode != ''">
+				and logisticsCode=#{logisticsCode}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+		and isHide='2'
+		and (proType is null or proType='')
+		order by createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="Order">
+		update th_order
+		<set>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				customer_id=#{customer.id},
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				store_id=#{store.id},
+			</if>
+			<if test="cashierUser != null and cashierUser.id != null and cashierUser.id != ''">
+				cashierUser_id=#{cashierUser.id},
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				guideUser_id=#{guideUser.id},
+			</if>
+			<if test="order != null and order.id != null and order.id != ''">
+				order_id=#{order.id},
+			</if>
+			<if test="code != null and code != ''">
+				code=#{code},
+			</if>
+			<if test="proType != null and proType != ''">
+				proType=#{proType},
+			</if>
+			<if test="payMoney != null and payMoney != ''">
+				payMoney=#{payMoney},
+			</if>
+			<if test="type != null and type != ''">
+				type=#{type},
+			</if>
+			<if test="payTime != null and payTime != ''">
+				payTime=#{payTime},
+			</if>
+			<if test="reserveName != null and reserveName != ''">
+				reserveName=#{reserveName},
+			</if>
+			<if test="reservePhone != null and reservePhone != ''">
+				reservePhone=#{reservePhone},
+			</if>
+			<if test="reserveTime != null and reserveTime != ''">
+				reserveTime=#{reserveTime},
+			</if>
+			<if test="reserveMoney != null and reserveMoney != ''">
+				reserveMoney=#{reserveMoney},
+			</if>
+			<if test="inLinePayMoney != null and inLinePayMoney != ''">
+				inLinePayMoney=#{inLinePayMoney},
+			</if>
+			<if test="state != null and state != ''">
+				state=#{state},
+			</if>
+			<if test="sumMoney != null and sumMoney != ''">
+				sumMoney=#{sumMoney},
+			</if>
+			<if test="sumNumber != null and sumNumber != ''">
+				sumNumber=#{sumNumber},
+			</if>
+			<if test="eticketMoney != null and eticketMoney != ''">
+				eticketMoney=#{eticketMoney},
+			</if>
+			<if test="subMoney != null and subMoney != ''">
+				subMoney=#{subMoney},
+			</if>
+			<if test="cashierCode != null and cashierCode != ''">
+				cashierCode=#{cashierCode},
+			</if>
+			<if test="payType != null and payType != ''">
+				payType=#{payType},
+			</if>
+			<if test="subUserType != null and subUserType != ''">
+				subUserType=#{subUserType},
+			</if>
+			<if test="leaveMessage != null and leaveMessage != ''">
+				leaveMessage=#{leaveMessage},
+			</if>
+			<if test="receiverName != null and receiverName != ''">
+				receiverName=#{receiverName},
+			</if>
+			<if test="receiverAddress != null and receiverAddress != ''">
+				receiverAddress=#{receiverAddress},
+			</if>
+			<if test="receiverPhone != null and receiverPhone != ''">
+				receiverPhone=#{receiverPhone},
+			</if>
+			<if test="expressName != null and expressName != ''">
+				expressName=#{expressName},
+			</if>
+			<if test="expressPhone != null and expressPhone != ''">
+				expressPhone=#{expressPhone},
+			</if>
+			<if test="batchCode != null and batchCode != ''">
+				batchCode=#{batchCode},
+			</if>
+			<if test="postage != null and postage != ''">
+				postage=#{postage},
+			</if>
+			<if test="logistics != null and logistics != ''">
+				logistics=#{logistics},
+			</if>
+			<if test="logisticsCode != null and logisticsCode != ''">
+				logisticsCode=#{logisticsCode},
+			</if>
+			<if test="remark != null and remark != ''">
+				remark=#{remark},
+			</if>
+			<if test="lestMoney != null and lestMoney != ''">
+				lestMoney=#{lestMoney},
+			</if>
+			<if test="oneReturnMoney != null and oneReturnMoney != ''">
+				oneReturnMoney=#{oneReturnMoney},
+			</if>
+			<if test="onePayMoney != null and onePayMoney != ''">
+				onePayMoney=#{onePayMoney},
+			</if>
+			<if test="twoPayMoney != null and twoPayMoney != ''">
+				twoPayMoney=#{twoPayMoney},
+			</if>
+			<if test="twoReturnMoney != null and twoReturnMoney != ''">
+				twoReturnMoney=#{twoReturnMoney},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="returnMoney != null and returnMoney != ''">
+				returnMoney=#{returnMoney},
+			</if>
+			<if test="returnWeChatPay != null and returnWeChatPay != ''">
+				returnWeChatPay=#{returnWeChatPay},
+			</if>
+			<if test="returnAliPay != null and returnAliPay != ''">
+				returnAliPay=#{returnAliPay},
+			</if>
+			<if test="returnCard != null and returnCard != ''">
+				returnCard=#{returnCard},
+			</if>
+			<if test="returnTianhe != null and returnTianhe != ''">
+				returnTianhe=#{returnTianhe},
+			</if>
+			<if test="isHide != null and isHide != ''">
+				isHide=#{isHide},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+	<update id="orderPaySuccess" parameterType="Order">
+		update th_order
+		<set>
+			<if test="'4'.toString() == type">
+				<if test="cashierCode != null and cashierCode != ''">
+					payTime=now(),
+					cashierUser_id=#{cashierUser.id},
+					cashierCode=#{cashierCode},
+					onePayType=#{onePayType},
+					onePayCode=#{onePayCode},
+					<if test="customer != null and customer.id != null and customer.id != ''">
+						customer_id=#{customer.id},
+					</if>
+				</if>
+				<if test="cashierCode == null or cashierCode == ''">
+					twoPayTime=now(),
+					twoCashierUser_id=#{twoCashierUser.id},
+					twoCashierCode=#{twoCashierCode},
+					twoPayType=#{twoPayType},
+					twoPayCode=#{twoPayCode},
+					state='6',
+				</if>
+			</if>
+			<if test="'4'.toString() != type and ('1'.toString() == type or '3'.toString() == type)" >
+				payTime=now(),
+				cashierUser_id=#{cashierUser.id},
+				cashierCode=#{cashierCode},
+				onePayCode=#{onePayCode},
+				state='2',
+				<if test="payType != null and payType != ''">
+					payType=#{payType},
+					onePayType=#{payType},
+				</if>
+				<if test="customer != null and customer.id != null and customer.id != ''">
+					customer_id=#{customer.id},
+				</if>
+			</if>
+			<if test="'4'.toString() != type and '1'.toString() != type and '3'.toString() != type">
+				payTime=now(),
+				cashierUser_id=#{cashierUser.id},
+				cashierCode=#{cashierCode},
+				onePayCode=#{onePayCode},
+				state='6',
+				<if test="payType != null and payType != ''">
+					payType=#{payType},
+					onePayType=#{payType},
+				</if>
+				<if test="payType == null or payType == ''">
+					onePayType=payType,
+				</if>
+				<if test="customer != null and customer.id != null and customer.id != ''">
+					customer_id=#{customer.id},
+				</if>
+			</if>
+			<if test="oneGetMoney != null and oneGetMoney != ''">
+				oneGetMoney=#{oneGetMoney},
+			</if>
+			<if test="twoGetMoney != null and twoGetMoney != ''">
+				twoGetMoney=#{twoGetMoney},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE (id=#{id} or order_id=#{id}) and state='1'
+	</update>
+	
+	<update id="updateInLinePayMoneyByBatchCode">
+		update th_order set inLinePayMoney=#{inLinePayMoney}
+		WHERE batchCode=#{batchCode} and state='1'
+	</update>
+	
+	<update id="updateStateOneToTwo">
+		update th_order
+		<set>
+			state='2',
+			payTime=now(),
+		</set>
+		WHERE id=#{id} and state='1'
+	</update>
+	
+	<update id="updateStateTwoToThree">
+		update th_order
+		<set>
+			state='3',
+		</set>
+		WHERE id=#{id} and state='2'
+	</update>
+	
+	<update id="updateStateThreeToFour">
+		update th_order
+		<set>
+			state='4',lt=now(),
+			<if test="logistics != null and logistics != ''">
+				logistics=#{logistics},
+			</if>
+			<if test="logisticsCode != null and logisticsCode != ''">
+				logisticsCode=#{logisticsCode},
+			</if>
+			<if test="expressName != null and expressName != ''">
+				expressName=#{expressName},
+			</if>
+			<if test="expressPhone != null and expressPhone != ''">
+				expressPhone=#{expressPhone},
+			</if>
+		</set>
+		WHERE id=#{id} and state='3'
+	</update>
+	
+	<update id="updateStateFourToFive">
+		update th_order
+		<set>
+			state='5',
+		</set>
+		WHERE id=#{id} and state='4'
+	</update>
+	
+	<update id="updateStateFiveToSix">
+		update th_order
+		<set>
+			state='6',
+		</set>
+		WHERE id=#{id} and state='5'
+	</update>
+	
+	<update id="updateStateFourToSix">
+		update th_order
+		<set>
+			state='6',
+		</set>
+		WHERE id=#{id} and state='4'
+	</update>
+
+<!-- 订单ID标识预约到货模板消息已发送 -->
+	<update id="setMsgSendYes">
+		update th_order set isSendMsg=CONCAT(IFNULL(isSendMsg,':'),',',#{goodsId}) 
+		WHERE id=#{id} 
+			and 0>=INSTR(IFNULL(isSendMsg,':'),#{goodsId})
+			and state='1'
+			and cashierCode is not null
+			and cashierCode!='';
+	</update>
+
+<!-- 获取包含指定产品的，预约单（已支付定金的、未发送过预约到货消息的） -->
+	<select id="getReserveOrderListByGoodsId" resultMap="resultOrder">
+		select * from th_order
+		where 0>=INSTR(IFNULL(isSendMsg,':'),#{goodsId}) 
+			and state='1'
+			and cashierCode is not null
+			and cashierCode!=''
+			and customer_id is not null
+			and customer_id!=''
+	</select>
+</mapper>

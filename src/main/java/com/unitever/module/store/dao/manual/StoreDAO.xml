@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.store.dao.manual.StoreDAO">
+	<resultMap type="Store" id="resultStore">
+		<id column="id" property="id" />
+		<result column="name" property="name" />
+		<result column="storeCode" property="storeCode" />
+		<result column="chargeName" property="chargeName" />
+		<result column="chargePhone" property="chargePhone" />
+		<result column="storePhone" property="storePhone" />
+		<result column="acreage" property="acreage" />
+		<result column="address" property="address" />
+		<result column="remark" property="remark" />
+		<result column="isDelete" property="isDelete" />
+		<result column="state" property="state" />
+		<result column="type" property="type" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association column="id" property="brandString" select="com.unitever.module.brand.dao.manual.BrandDAO.getAllBrandByStoreId" />
+		<collection property="storePropertieList" column="id" select="com.unitever.module.storeProperty.dao.manual.StorePropertyDAO.getAllByStoreId" />
+		<collection property="userList" column="id" select="com.unitever.auth.user.dao.manual.UserDAO.getUserListByStoreId" />
+		<collection property="imgUrl" column="id" select="com.unitever.platform.component.attachment.dao.manual.AttachmentDAO.getUrlStringListByOwnerId"/>
+	</resultMap>
+
+	<select id="get" resultMap="resultStore" parameterType="String">
+		select * from th_store
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAllStartStore" resultMap="resultStore">
+		select * from th_store where isDelete='1' and state='1' and type='1' order by type asc,createTime desc
+	</select>
+
+	<select id="getAll" resultMap="resultStore">
+		select * from th_store where isDelete='1' and type='1' order by type asc,createTime desc
+	</select>
+
+<!-- 获取所有直营店和小商品店 -->
+	<select id="getAllTianheStore" resultMap="resultStore">
+		select * from th_store where isDelete='1' and (type='1' or type='3') order by type asc,createTime desc
+	</select>
+
+<!-- 获取所有商家店 -->
+	<select id="getAllNoTianheStore" resultMap="resultStore">
+		select * from th_store where isDelete='1' and type='2' order by createTime desc
+	</select>
+
+<!-- 依据门店code获取门店 -->
+	<select id="getStoreByStoreCode" resultMap="resultStore">
+		select * from th_store where isDelete='1' and storeCode=#{storeCode} order by createTime desc
+	</select>
+	
+<!-- 根据用户购物车获取其商品所属门店 -->
+	<select id="getStoreByCustomerId" resultMap="resultStore">
+		SELECT * FROM th_store WHERE id in (
+			select store_id from th_goods WHERE id in (
+				SELECT goods_id FROM th_shoppingcart 
+					WHERE customer_id=#{customerId}
+				and goods_id in (select id from th_goods where goods_id in (select id from th_goods where isDelete='1' and isVisible='1' and isAbnormal='2'))
+			)
+		)
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_store where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="Store">
+		insert into
+		th_store(id,name,storeCode,chargeName,chargePhone,storePhone,acreage,
+				address,remark,isDelete,createTime,ft,fu,state,type)
+		value(#{id},#{name},#{storeCode},#{chargeName},#{chargePhone},#{storePhone},#{acreage},
+				#{address},#{remark},#{isDelete},#{createTime},#{ft},#{fu},#{state},#{type})
+	</insert>
+
+	<select id="getCountByStore" resultType="Integer" parameterType="Store">
+		select count(*) From th_store
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="name != null and name != ''">
+				and name like CONCAT('%','${name}','%')
+			</if>
+			<if test="storeCode != null and storeCode != ''">
+				and storeCode=#{storeCode}
+			</if>
+			<if test="chargeName != null and phone != ''">
+				and chargeName=#{chargeName}
+			</if>
+			<if test="chargePhone != null and chargePhone != ''">
+				and chargePhone=#{chargePhone}
+			</if>
+			<if test="storePhone != null and storePhone != ''">
+				and storePhone=#{storePhone}
+			</if>
+			<if test="acreage != null and acreage != ''">
+				and acreage=#{acreage}
+			</if>
+			<if test="address != null and address != ''">
+				and address=#{address}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="type != null and type != ''">
+				and type=#{type}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1'
+		</where>
+	</select>
+	
+	<select id="getCountByObject" resultType="Integer" parameterType="Store">
+		select count(*) From th_store
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="name != null and name != ''">
+				and name like CONCAT('%','${name}','%')
+			</if>
+			<if test="storeCode != null and storeCode != ''">
+				and storeCode=#{storeCode}
+			</if>
+			<if test="chargeName != null and phone != ''">
+				and chargeName=#{chargeName}
+			</if>
+			<if test="chargePhone != null and chargePhone != ''">
+				and chargePhone=#{chargePhone}
+			</if>
+			<if test="storePhone != null and storePhone != ''">
+				and storePhone=#{storePhone}
+			</if>
+			<if test="acreage != null and acreage != ''">
+				and acreage=#{acreage}
+			</if>
+			<if test="address != null and address != ''">
+				and address=#{address}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="type != null and type != ''">
+				and type=#{type}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1'
+		</where>
+	</select>
+
+	<select id="getStoreByStore" resultMap="resultStore" parameterType="Store">
+		select * From th_store
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="name != null and name != ''">
+				and name like CONCAT('%','${name}','%')
+			</if>
+			<if test="storeCode != null and storeCode != ''">
+				and storeCode=#{storeCode}
+			</if>
+			<if test="chargeName != null and phone != ''">
+				and chargeName=#{chargeName}
+			</if>
+			<if test="chargePhone != null and chargePhone != ''">
+				and chargePhone=#{chargePhone}
+			</if>
+			<if test="storePhone != null and storePhone != ''">
+				and storePhone=#{storePhone}
+			</if>
+			<if test="acreage != null and acreage != ''">
+				and acreage=#{acreage}
+			</if>
+			<if test="address != null and address != ''">
+				and address=#{address}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="type != null and type != ''">
+				and type=#{type}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1'
+		</where>
+		order by type asc,createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="Store">
+		update th_store
+		<set>
+			<if test="name != null and name != ''">
+				name=#{name},
+			</if>
+			<if test="storeCode != null and storeCode != ''">
+				storeCode=#{storeCode},
+			</if>
+			<if test="chargeName != null and chargeName != ''">
+				chargeName=#{chargeName},
+			</if>
+			<if test="chargePhone != null and chargePhone != ''">
+				chargePhone=#{chargePhone},
+			</if>
+			<if test="storePhone != null and storePhone != ''">
+				storePhone=#{storePhone},
+			</if>
+			<if test="acreage != null and acreage != ''">
+				acreage=#{acreage},
+			</if>
+			<if test="address != null and address != ''">
+				address=#{address},
+			</if>
+			<if test="remark != null and remark != ''">
+				remark=#{remark},
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				isDelete=#{isDelete},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="state != null and state != ''">
+				state=#{state},
+			</if>
+			<if test="type != null and type != ''">
+				type=#{type},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+<!-- 门店停业 -->
+	<update id="storeStop">
+		update th_store
+		set state='2'
+		where id=#{id}
+	</update>
+
+<!-- 门店营业 -->
+	<update id="storeStart">
+		update th_store
+		set state='1'
+		where id=#{id}
+	</update>
+</mapper>

@@ -1,0 +1,47 @@
+* {
+	margin: 0;
+	padding: 0;
+}
+
+html,
+body {
+	height: 100%;
+	width: 100%;
+}
+
+body {
+	font-family: "microsoft yahei";
+}
+.swiper-container {
+	width: 100%;
+	height: 100%;
+	background: #fff;
+}
+
+.swiper-slide {
+	width: 100%;
+	height: 100%;
+	background-size: 100% 100%;
+}
+.bg1{
+background-image: url(../img/TH_back1.png);
+}
+.bg2{
+background-image: url(../img/TH_back2.png);
+}
+.bg3{
+background-image: url(../img/TH_back3.png);
+}
+.bg4{
+background-image: url(../img/TH_back4.png);
+}
+.bg5{
+background-image: url(../img/TH_back5.png);
+}
+.index_middle_huan{
+position: relative;
+top: 13%;
+width: 90%;
+margin: auto;
+}
+

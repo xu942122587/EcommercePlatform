@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.orderSubremark.dao.manual.OrderSubremarkDAO">
+	<resultMap type="OrderSubremark" id="resultOrderSubremark">
+		<id column="id" property="id" />
+		<result column="isSendLadder" property="isSendLadder" />
+		<result column="salesMoney" property="salesMoney" />
+		<result column="remark" property="remark" />
+		<result column="putOutGoodsQrcodeString" property="putOutGoodsQrcodeString" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="order" column="order_id" select="com.unitever.module.order.dao.manual.OrderDAO.get" />
+		<association property="orderGoods" column="orderGoods_id" select="com.unitever.module.orderGoods.dao.manual.OrderGoodsDAO.get" />
+		<association property="promotionLadder" column="promotionLadder_id" select="com.unitever.module.promotionLadder.dao.manual.PromotionLadderDAO.get" />
+		<association property="promotion" column="promotion_id" select="com.unitever.module.promotion.dao.manual.PromotionDAO.get" />
+	</resultMap>
+
+	<select id="get" resultMap="resultOrderSubremark" parameterType="String">
+		select * from th_order_subremark
+		<where>
+			id=#{id}
+		</where>
+		order by createTime desc
+	</select>
+
+	<select id="getAll" resultMap="resultOrderSubremark">
+		select * from th_order_subremark order by createTime desc
+	</select>
+
+<!-- 依据子订单ID获取减免记录列表 -->
+	<select id="getAllByChildOrderId" resultMap="resultOrderSubremark">
+		select * from th_order_subremark where order_id=#{id} order by createTime desc
+	</select>
+
+<!-- 依据orderGoodsId获取一条减免记录 -->
+	<select id="getOneByorderGoodsId" resultMap="resultOrderSubremark">
+		select * from th_order_subremark where orderGoods_id=#{id} order by createTime desc limit 0,1
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_order_subremark where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="OrderSubremark">
+		insert into
+		th_order_subremark(id,order_id,orderGoods_id,promotionLadder_id,promotion_id,isSendLadder,salesMoney,remark,createTime,ft,fu,putOutGoodsQrcodeString)
+		value(#{id},#{order.id},#{orderGoods.id},#{promotionLadder.id},#{promotion.id},#{isSendLadder},#{salesMoney},#{remark},#{createTime},#{ft},#{fu},#{putOutGoodsQrcodeString})
+	</insert>
+
+	<select id="getCountByOrderSubremark" resultType="Integer" parameterType="OrderSubremark">
+		select count(*) From th_order_subremark
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="order != null and order.id != null and order.id != ''">
+				and order_id=#{order.id}
+			</if>
+			<if test="orderGoods != null and orderGoods.id != null and orderGoods.id != ''">
+				and orderGoods_id=#{orderGoods.id}
+			</if>
+			<if test="promotionLadder != null and promotionLadder.id != null and promotionLadder.id != ''">
+				and promotionLadder_id=#{promotionLadder.id}
+			</if>
+			<if test="promotion != null and promotion.id != null and promotion.id != ''">
+				and promotion_id=#{promotion.id}
+			</if>
+			<if test="isSendLadder != null and isSendLadder != ''">
+				and isSendLadder=#{isSendLadder}
+			</if>
+			<if test="salesMoney != null and salesMoney != ''">
+				and salesMoney=#{salesMoney}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="putOutGoodsQrcodeString != null and putOutGoodsQrcodeString != ''">
+				and putOutGoodsQrcodeString  like CONCAT('%','${putOutGoodsQrcodeString}','%')
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+	</select>
+
+	<select id="getOrderSubremarkByOrderSubremark" resultMap="resultOrderSubremark" parameterType="OrderSubremark">
+		select * From th_order_subremark
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="order != null and order.id != null and order.id != ''">
+				and order_id=#{order.id}
+			</if>
+			<if test="orderGoods != null and orderGoods.id != null and orderGoods.id != ''">
+				and orderGoods_id=#{orderGoods.id}
+			</if>
+			<if test="promotionLadder != null and promotionLadder.id != null and promotionLadder.id != ''">
+				and promotionLadder_id=#{promotionLadder.id}
+			</if>
+			<if test="promotion != null and promotion.id != null and promotion.id != ''">
+				and promotion_id=#{promotion.id}
+			</if>
+			<if test="isSendLadder != null and isSendLadder != ''">
+				and isSendLadder=#{isSendLadder}
+			</if>
+			<if test="salesMoney != null and salesMoney != ''">
+				and salesMoney=#{salesMoney}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="putOutGoodsQrcodeString != null and putOutGoodsQrcodeString != ''">
+				and putOutGoodsQrcodeString  like CONCAT('%','${putOutGoodsQrcodeString}','%')
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+		order by createTime desc
+	</select>
+
+	<update id="update" parameterType="OrderSubremark">
+		update th_order_subremark
+		<set>
+			<if test="order != null and order.id != null and order.id != ''">
+				order_id=#{order.id},
+			</if>
+			<if test="orderGoods != null and orderGoods.id != null and orderGoods.id != ''">
+				orderGoods_id=#{orderGoods.id},
+			</if>
+			<if test="promotionLadder != null and promotionLadder.id != null and promotionLadder.id != ''">
+				promotionLadder_id=#{promotionLadder.id},
+			</if>
+			<if test="promotion != null and promotion.id != null and promotion.id != ''">
+				promotion_id=#{promotion.id},
+			</if>
+			<if test="isSendLadder != null and isSendLadder != ''">
+				isSendLadder=#{isSendLadder},
+			</if>
+			<if test="salesMoney != null and salesMoney != ''">
+				salesMoney=#{salesMoney},
+			</if>
+			<if test="remark != null and remark != ''">
+				remark=#{remark},
+			</if>
+			<if test="putOutGoodsQrcodeString != null and putOutGoodsQrcodeString != ''">
+				putOutGoodsQrcodeString=concat_ws('_',putOutGoodsQrcodeString,#{putOutGoodsQrcodeString}),
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+			<if test="putOutGoodsQrcodeString != null and putOutGoodsQrcodeString != ''">
+				and (0&gt;=INSTR(putOutGoodsQrcodeString,#{putOutGoodsQrcodeString}) or putOutGoodsQrcodeString is null or putOutGoodsQrcodeString='')
+			</if>
+	</update>
+
+	<update id="deletePutOutQrcode">
+		update th_order_subremark set putOutGoodsQrcodeString=REPLACE(putOutGoodsQrcodeString,#{qRCodeID},'')
+		where id=#{orderSubremarkId}
+			and 0&lt;INSTR(putOutGoodsQrcodeString,#{qRCodeID})
+	</update>
+
+<!-- 依据优惠记录ID字符串更新优惠记录为已发放 -->
+	<update id="setFinishByOSM_ID" >
+		update th_order_subremark set isSendLadder='2'
+		where 0&lt;INSTR(#{oSM_ID}, id)
+	</update>
+
+<!-- 依据优惠记录ID字符串更新优惠记录为未发放 -->
+	<update id="setNoFinishByOSM_ID" >
+		update th_order_subremark set isSendLadder='1'
+		where 0&lt;INSTR(#{oSM_ID}, id)
+	</update>
+
+	<update id="setFinishByGoodsIdsAndParentOrderId" >
+		update th_order_subremark set isSendLadder='2'
+		where (order_id in (
+			SELECT * 
+			from (
+				(select DISTINCT id from th_order where id=#{parentOrderId})
+				UNION
+				(SELECT DISTINCT id from th_order where order_id in (select DISTINCT id from th_order where id=#{parentOrderId}))
+			) AS ORDER_ID_TABLE
+		) or orderGoods_id in (
+			select DISTINCT id from th_order_goods where order_id in (
+				SELECT * 
+				from (
+					(select DISTINCT id from th_order where id=#{parentOrderId})
+					UNION
+					(SELECT DISTINCT id from th_order where order_id in (select DISTINCT id from th_order where id=#{parentOrderId}))
+				) AS ORDER_ID_TABLE
+			)
+		))
+		and promotionLadder_id in (
+			select id from th_promotion_ladder where 0&lt;INSTR(#{goods_id_string},goods_id)
+		)
+	</update>
+
+	<update id="setNoFinishByGoodsIdsAndParentOrderId" >
+		update th_order_subremark set isSendLadder='1'
+		where (order_id in (
+			SELECT * 
+			from (
+				(select DISTINCT id from th_order where id=#{parentOrderId})
+				UNION
+				(SELECT DISTINCT id from th_order where order_id in (select DISTINCT id from th_order where id=#{parentOrderId}))
+			) AS ORDER_ID_TABLE
+		) or orderGoods_id in (
+			select DISTINCT id from th_order_goods where order_id in (
+				SELECT * 
+				from (
+					(select DISTINCT id from th_order where id=#{parentOrderId})
+					UNION
+					(SELECT DISTINCT id from th_order where order_id in (select DISTINCT id from th_order where id=#{parentOrderId}))
+				) AS ORDER_ID_TABLE
+			)
+		))
+		and promotionLadder_id in (
+			select id from th_promotion_ladder where 0&lt;INSTR(#{goods_id_string},goods_id)
+		)
+	</update>
+</mapper>

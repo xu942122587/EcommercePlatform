@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.client.dao.manual.ClientShoppingcartDAO">
+	<resultMap type="ClientShoppingcart" id="resultClientShoppingcart">
+		<id column="id" property="id" />
+		<result column="count" property="count" />
+		<result column="type" property="type" />
+		<result column="salesPrice" property="salesPrice" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="goods" column="goods_id" select="com.unitever.module.goods.dao.manual.GoodsDAO.get" />
+		<association property="user" column="user_id" select="com.unitever.auth.user.dao.manual.UserDAO.get" />
+	</resultMap>
+
+	<select id="get" resultMap="resultClientShoppingcart" parameterType="String">
+		select * from th_client_shoppingcart
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultClientShoppingcart">
+		select * from th_client_shoppingcart order by createTime desc
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_client_shoppingcart where id=#{id};
+	</delete>
+
+<!-- 收银登录的时候初始化收银员购物车 -->
+	<delete id="initWithUserLogin" parameterType="String">
+		delete from th_client_shoppingcart where user_id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="ClientShoppingcart">
+		insert into
+		th_client_shoppingcart(id,goods_id,user_id,count,createTime,ft,fu,salesPrice,type)
+		value(#{id},#{goods.id},#{customer.id},#{count},#{createTime},#{ft},#{fu},#{salesPrice},#{type})
+	</insert>
+
+	<update id="update" parameterType="ClientShoppingcart">
+		update th_client_shoppingcart
+		<set>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				goods_id=#{goods.id},
+			</if>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				user_id=#{customer.id},
+			</if>
+			<if test="count != null and count != ''">
+				count=#{count},
+			</if>
+			<if test="salesPrice != null and salesPrice != ''">
+				salesPrice=#{salesPrice},
+			</if>
+			<if test="type != null and type != ''">
+				type=#{type},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+</mapper>

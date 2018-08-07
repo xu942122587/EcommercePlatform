@@ -1,0 +1,492 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.inventory.dao.manual.InventoryDAO">
+	<resultMap type="Inventory" id="resultInventory">
+		<id column="id" property="id" />
+		<result column="count" property="count" />
+		<result column="money" property="money" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="goods" column="goods_id" select="com.unitever.module.goods.dao.manual.GoodsDAO.get" />
+		<association property="storage" column="storage_id" select="com.unitever.module.storage.dao.manual.StorageDAO.get" />
+	</resultMap>
+	
+	<resultMap type="com.unitever.module.inventory.vo.InventoryVO" id="resultInventoryVO">
+		<id column="id" property="id" />
+		<result column="goods_name" property="goods_name" />
+		<result column="storage_name" property="storage_name" />
+		<result column="count" property="count" />
+		<result column="money" property="money" />
+		<result column="sumCount" property="sumCount" />
+		<result column="sumMoney" property="sumMoney" />
+		<result column="allCount" property="allCount" />
+		<result column="allMoney" property="allMoney" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="goods" column="goods_id" select="com.unitever.module.goods.dao.manual.GoodsDAO.get" />
+		<association property="storage" column="storage_id" select="com.unitever.module.storage.dao.manual.StorageDAO.get" />
+	</resultMap>
+
+	<select id="get" resultMap="resultInventory" parameterType="String">
+		select * from th_inventory
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<!-- 单仓库库存总量及总金额统计 -->
+	<select id="getSumMoneyAndCountByStorage" resultType="java.util.Map">
+		select sto.name as name,sto.id as storageId,ROUND(SUM(count),0) as count,IFNULL(ROUND(SUM(money),2),0) as sumMoney 
+		from th_inventory inv,th_storage sto 
+		where inv.storage_id=sto.id 
+		GROUP BY storage_id
+	</select>
+
+
+<!-- 依据产品ID和库房Id增加库存量、库存金额 -->
+	<update id="getAddInventoryNumberByGoodsIdAndStorageId">
+		update th_inventory
+		set count=count+CAST(#{number} AS SIGNED),money=ROUND(money+CAST(#{money} AS DECIMAL(38,2)),2)
+		where goods_id=#{goodsId} and storage_id=#{storageId}
+	</update>
+
+<!-- 依据产品ID和库房Id减少库存量、库存金额 -->
+	<update id="getSubInventoryNumberByGoodsIdAndStorageId">
+		update th_inventory
+		set count=count-CAST(#{number} AS SIGNED),money=ROUND(money-CAST(#{money} AS DECIMAL(38,2)),2)
+		where goods_id=#{goodsId} and storage_id=#{storageId}
+	</update>
+
+<!-- 依据产品ID和库房Id获取库存记录条数 -->
+	<select id="getInventoryCountByGoodsIdAndStorageId" resultType="Integer">
+		select count(*) from th_inventory where goods_id=#{goodsId} and storage_id=#{storageId}
+	</select>
+
+<!-- 依据产品ID获取单个产品（子产品）的库存 -->
+	<select id="getGoodsInventoryByGoodsId" resultType="String">
+		select sum(count) as count from th_inventory where goods_id=#{id}
+	</select>
+
+<!-- 依据主产品ID获取子产品的库存 -->
+	<select id="getGoodsChildInventoryListByGoodsId" resultMap="resultInventory">
+		select * from th_inventory where goods_id in (select id from th_goods where goods_id=#{id}  and isDelete='1') and storage_id=#{storageId}
+	</select>
+	
+<!-- 依据产品ID和仓库Id获取单商品的库存 -->
+	<select id="getGoodsInventoryByGoodsIdAndStorageId" resultMap="resultInventory">
+		select * from th_inventory where goods_id =#{goodsId} and storage_id=#{storageId}
+	</select>
+	
+<!-- 获取所有库存记录 -->
+	<select id="getCountByInventoryVO" resultType="Integer">
+		select count(inv_droup.goods_id)
+		from (
+			SELECT DISTINCT goods.id as goods_id,
+				storage_.id as storage_Id,
+				goods.name as goods_name,
+				storage_.name as storage_name,
+				ROUND(SUM(inv.count),0) as count,
+				ROUND(SUM(inv.money),2) as money
+			from th_goods subGoods,
+				th_goods goods,
+				th_inventory inv,
+				th_storage storage_
+			<where>
+				1=1
+				<if test="storage != null and storage.id != null and storage.id != ''">
+					and storage_.id=#{storage.id}
+				</if>
+				<if test="goods != null and goods.store != null and goods.store.id != null and goods.store.id != ''">
+					and goods.id in (select id from th_goods where store_id=#{goods.store.id} and isDelete='1')
+				</if>
+				<if test="goods != null and goods.brand != null and goods.brand.id != null and goods.brand.id != ''">
+					and goods.id in (select id from th_goods where brand_id=#{goods.brand.id} and isDelete='1')
+				</if>
+				<if test="goods != null and goods.classification != null and goods.classification.name != null and goods.classification.name != ''">
+					and goods.id in (select id from th_goods where classification_id in (select id from th_classification where name like CONCAT('%','${goods.classification.name}','%')) and isDelete='1')
+				</if>
+				<if test="goods != null and goods.name != null and goods.name != ''">
+					and goods.id in (select id from th_goods where name like CONCAT('%','${goods.name}','%'))
+				</if>
+				and goods.isDelete='1' 
+				and subGoods.id=inv.goods_id 
+				and (
+					( goods.id=subGoods.goods_id
+						and (subGoods.name is null or subGoods.name='')
+					)or( goods.id=subGoods.id
+						and (subGoods.name is not null or subGoods.name!='')
+					)
+				)
+				and storage_.id=inv.storage_id
+			</where>
+			GROUP BY inv.storage_id,goods.id
+		) as inv_droup,
+		(
+			SELECT DISTINCT goods.id as goods_id,
+				ROUND(SUM(inv.count),0) as count,
+				ROUND(SUM(inv.money),2) as money
+			from th_goods subGoods,
+				th_goods goods,
+				th_inventory inv,
+				th_storage storage_
+			<where>
+				1=1
+				<if test="storage != null and storage.id != null and storage.id != ''">
+					and storage_.id=#{storage.id}
+				</if>
+				<if test="goods != null and goods.store != null and goods.store.id != null and goods.store.id != ''">
+					and goods.id in (select id from th_goods where store_id=#{goods.store.id} and isDelete='1')
+				</if>
+				<if test="goods != null and goods.brand != null and goods.brand.id != null and goods.brand.id != ''">
+					and goods.id in (select id from th_goods where brand_id=#{goods.brand.id} and isDelete='1')
+				</if>
+				<if test="goods != null and goods.classification != null and goods.classification.name != null and goods.classification.name != ''">
+					and goods.id in (select id from th_goods where classification_id in (select id from th_classification where name like CONCAT('%','${goods.classification.name}','%')) and isDelete='1')
+				</if>
+				<if test="goods != null and goods.name != null and goods.name != ''">
+					and goods.id in (select id from th_goods where name like CONCAT('%','${goods.name}','%'))
+				</if>
+				and goods.isDelete='1' 
+				and subGoods.id=inv.goods_id 
+				and (
+					( goods.id=subGoods.goods_id
+						and (subGoods.name is null or subGoods.name='')
+					)or( goods.id=subGoods.id
+						and (subGoods.name is not null or subGoods.name!='')
+					)
+				)
+				and storage_.id=inv.storage_id
+			</where>
+			GROUP BY goods.id
+		) as inv_droup_goods
+		where 1=1 and inv_droup.goods_id=inv_droup_goods.goods_id
+		<if test="downCount != null and downCount != ''">
+			and inv_droup.count&gt;=CAST(#{downCount} AS SIGNED)
+		</if>
+		<if test="upCount != null and upCount != ''">
+			and inv_droup.count&lt;=CAST(#{upCount} AS SIGNED)
+		</if>
+		order by inv_droup.goods_id desc
+	</select>
+	
+<!-- 获取所有库存记录 -->
+	<select id="getInventoryVOList" resultMap="resultInventoryVO">
+		select inv_droup.goods_id as goods_id,
+			inv_droup.storage_Id as storage_Id,
+			inv_droup.goods_name as goods_name,
+			inv_droup.storage_name as storage_name,
+			inv_droup.count as count,
+			inv_droup.money as money,
+			inv_droup_goods.count as sumCount,
+			inv_droup_goods.money as sumMoney
+		from (
+			SELECT DISTINCT goods.id as goods_id,
+				storage_.id as storage_Id,
+				goods.name as goods_name,
+				storage_.name as storage_name,
+				ROUND(SUM(inv.count),0) as count,
+				ROUND(SUM(inv.money),2) as money
+			from th_goods subGoods,
+				th_goods goods,
+				th_inventory inv,
+				th_storage storage_
+			<where>
+				1=1
+				<if test="storage != null and storage.id != null and storage.id != ''">
+					and storage_.id=#{storage.id}
+				</if>
+				<if test="goods != null and goods.store != null and goods.store.id != null and goods.store.id != ''">
+					and goods.id in (select id from th_goods where store_id=#{goods.store.id} and isDelete='1')
+				</if>
+				<if test="goods != null and goods.brand != null and goods.brand.id != null and goods.brand.id != ''">
+					and goods.id in (select id from th_goods where brand_id=#{goods.brand.id} and isDelete='1')
+				</if>
+				<if test="goods != null and goods.classification != null and goods.classification.name != null and goods.classification.name != ''">
+					and goods.id in (select id from th_goods where classification_id in (select id from th_classification where name like CONCAT('%','${goods.classification.name}','%')) and isDelete='1')
+				</if>
+				<if test="goods != null and goods.name != null and goods.name != ''">
+					and goods.id in (select id from th_goods where name like CONCAT('%','${goods.name}','%'))
+				</if>
+				and goods.isDelete='1' 
+				and subGoods.id=inv.goods_id 
+				and (
+					( goods.id=subGoods.goods_id
+						and (subGoods.name is null or subGoods.name='')
+					)or( goods.id=subGoods.id
+						and (subGoods.name is not null or subGoods.name!='')
+					)
+				)
+				and storage_.id=inv.storage_id
+			</where>
+			GROUP BY inv.storage_id,goods.id
+		) as inv_droup,
+		(
+			SELECT DISTINCT goods.id as goods_id,
+				ROUND(SUM(inv.count),0) as count,
+				ROUND(SUM(inv.money),2) as money
+			from th_goods subGoods,
+				th_goods goods,
+				th_inventory inv,
+				th_storage storage_
+			<where>
+				1=1
+				<if test="storage != null and storage.id != null and storage.id != ''">
+					and storage_.id=#{storage.id}
+				</if>
+				<if test="goods != null and goods.store != null and goods.store.id != null and goods.store.id != ''">
+					and goods.id in (select id from th_goods where store_id=#{goods.store.id} and isDelete='1')
+				</if>
+				<if test="goods != null and goods.brand != null and goods.brand.id != null and goods.brand.id != ''">
+					and goods.id in (select id from th_goods where brand_id=#{goods.brand.id} and isDelete='1')
+				</if>
+				<if test="goods != null and goods.classification != null and goods.classification.name != null and goods.classification.name != ''">
+					and goods.id in (select id from th_goods where classification_id in (select id from th_classification where name like CONCAT('%','${goods.classification.name}','%')) and isDelete='1')
+				</if>
+				<if test="goods != null and goods.name != null and goods.name != ''">
+					and goods.id in (select id from th_goods where name like CONCAT('%','${goods.name}','%'))
+				</if>
+				and goods.isDelete='1' 
+				and subGoods.id=inv.goods_id 
+				and (
+					( goods.id=subGoods.goods_id
+						and (subGoods.name is null or subGoods.name='')
+					)or( goods.id=subGoods.id
+						and (subGoods.name is not null or subGoods.name!='')
+					)
+				)
+				and storage_.id=inv.storage_id
+			</where>
+			GROUP BY goods.id
+		) as inv_droup_goods
+		where 1=1 and inv_droup.goods_id=inv_droup_goods.goods_id
+		<if test="downCount != null and downCount != ''">
+			and inv_droup.count&gt;=CAST(#{downCount} AS SIGNED)
+		</if>
+		<if test="upCount != null and upCount != ''">
+			and inv_droup.count&lt;=CAST(#{upCount} AS SIGNED)
+		</if>
+		order by inv_droup.goods_id desc, inv_droup.storage_Id desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<!-- 获取所有库存记录 -->
+	<select id="getSumInventoryVOList" resultMap="resultInventoryVO">
+		select 
+			sum(inv_droup.count) as allCount,
+			sum(inv_droup.money) as allMoney
+		from (
+			SELECT DISTINCT goods.id as goods_id,
+				storage_.id as storage_Id,
+				goods.name as goods_name,
+				storage_.name as storage_name,
+				ROUND(SUM(inv.count),0) as count,
+				ROUND(SUM(inv.money),2) as money
+			from th_goods subGoods,
+				th_goods goods,
+				th_inventory inv,
+				th_storage storage_
+			<where>
+				1=1
+				<if test="storage != null and storage.id != null and storage.id != ''">
+					and storage_.id=#{storage.id}
+				</if>
+				<if test="goods != null and goods.store != null and goods.store.id != null and goods.store.id != ''">
+					and goods.id in (select id from th_goods where store_id=#{goods.store.id} and isDelete='1')
+				</if>
+				<if test="goods != null and goods.brand != null and goods.brand.id != null and goods.brand.id != ''">
+					and goods.id in (select id from th_goods where brand_id=#{goods.brand.id} and isDelete='1')
+				</if>
+				<if test="goods != null and goods.classification != null and goods.classification.name != null and goods.classification.name != ''">
+					and goods.id in (select id from th_goods where classification_id in (select id from th_classification where name like CONCAT('%','${goods.classification.name}','%')) and isDelete='1')
+				</if>
+				<if test="goods != null and goods.name != null and goods.name != ''">
+					and goods.id in (select id from th_goods where name like CONCAT('%','${goods.name}','%'))
+				</if>
+				and goods.isDelete='1' 
+				and subGoods.id=inv.goods_id 
+				and (
+					( goods.id=subGoods.goods_id
+						and (subGoods.name is null or subGoods.name='')
+					)or( goods.id=subGoods.id
+						and (subGoods.name is not null or subGoods.name!='')
+					)
+				)
+				and storage_.id=inv.storage_id
+			</where>
+			GROUP BY inv.storage_id,goods.id
+		) as inv_droup,
+		(
+			SELECT DISTINCT goods.id as goods_id,
+				ROUND(SUM(inv.count),0) as count,
+				ROUND(SUM(inv.money),2) as money
+			from th_goods subGoods,
+				th_goods goods,
+				th_inventory inv,
+				th_storage storage_
+			<where>
+				1=1
+				<if test="storage != null and storage.id != null and storage.id != ''">
+					and storage_.id=#{storage.id}
+				</if>
+				<if test="goods != null and goods.store != null and goods.store.id != null and goods.store.id != ''">
+					and goods.id in (select id from th_goods where store_id=#{goods.store.id} and isDelete='1')
+				</if>
+				<if test="goods != null and goods.brand != null and goods.brand.id != null and goods.brand.id != ''">
+					and goods.id in (select id from th_goods where brand_id=#{goods.brand.id} and isDelete='1')
+				</if>
+				<if test="goods != null and goods.classification != null and goods.classification.name != null and goods.classification.name != ''">
+					and goods.id in (select id from th_goods where classification_id in (select id from th_classification where name like CONCAT('%','${goods.classification.name}','%')) and isDelete='1')
+				</if>
+				<if test="goods != null and goods.name != null and goods.name != ''">
+					and goods.id in (select id from th_goods where name like CONCAT('%','${goods.name}','%'))
+				</if>
+				and goods.isDelete='1' 
+				and subGoods.id=inv.goods_id 
+				and (
+					( goods.id=subGoods.goods_id
+						and (subGoods.name is null or subGoods.name='')
+					)or( goods.id=subGoods.id
+						and (subGoods.name is not null or subGoods.name!='')
+					)
+				)
+				and storage_.id=inv.storage_id
+			</where>
+			GROUP BY goods.id
+		) as inv_droup_goods
+		where 1=1 and inv_droup.goods_id=inv_droup_goods.goods_id
+		<if test="downCount != null and downCount != ''">
+			and inv_droup.count&gt;=CAST(#{downCount} AS SIGNED)
+		</if>
+		<if test="upCount != null and upCount != ''">
+			and inv_droup.count&lt;=CAST(#{upCount} AS SIGNED)
+		</if>
+		order by inv_droup.goods_id desc
+	</select>
+
+	<select id="getAll" resultMap="resultInventory">
+		select * from th_inventory order by createTime desc
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_inventory where id=#{id}
+	</delete>
+
+	<insert id="save" parameterType="Inventory">
+		insert into th_inventory(id,goods_id,count,money,storage_id,createTime,ft,fu)
+		select #{id},#{goods.id},#{count},#{money},#{storage.id},#{createTime},#{ft},#{fu}
+		FROM DUAL
+		where 0>=(select count(*) from th_inventory where goods_id=#{goods.id} and storage_id=#{storage.id})
+	</insert>
+
+	<select id="getCountByInventory" resultType="Integer" parameterType="Inventory">
+		select count(*) From th_inventory
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				and goods_id=#{goods.id}
+			</if>
+			<if test="count != null and count != ''">
+				and count=#{count}
+			</if>
+			<if test="money != null and money != ''">
+				and money=#{money}
+			</if>
+			<if test="storage != null and storage.id != null and storage.id != ''">
+				and storage_id=#{storage.id}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+	</select>
+
+	<select id="getInventoryByInventory" resultMap="resultInventory" parameterType="Inventory">
+		select * From th_inventory
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				and goods_id=#{goods.id}
+			</if>
+			<if test="goods != null and goods.store != null and goods.store.id != null and goods.store.id != ''">
+				and goods_id in (select id from th_goods where store_id=#{goods.store.id} and isDelete='1')
+			</if>
+			<if test="goods != null and goods.brand != null and goods.brand.id != null and goods.brand.id != ''">
+				and goods_id in (select id from th_goods where brand_id=#{goods.brand.id} and isDelete='1')
+			</if>
+			<if test="goods != null and goods.name != null and goods.name != ''">
+				and goods_id in (select id from th_goods where name like CONCAT('%','${goods.name}','%'))
+			</if>
+			<if test="goods != null and goods.classification != null and goods.classification.name != null and goods.classification.name != ''">
+				and goods_id in (select id from th_goods where classification_id in (select id from th_classification where name like CONCAT('%','${goods.classification.name}','%')) and isDelete='1')
+			</if>
+			<if test="count != null and count != ''">
+				and count=#{count}
+			</if>
+			<if test="money != null and money != ''">
+				and money=#{money}
+			</if>
+			<if test="storage != null and storage.id != null and storage.id != ''">
+				and storage_id=#{storage.id}
+			</if>
+			<if test="downCount != null and downCount != ''">
+				and CAST(count AS SIGNED)&gt;=CAST(#{downCount} AS SIGNED)
+			</if>
+			<if test="upCount != null and upCount != ''">
+				and CAST(count AS SIGNED)&lt;=CAST(#{upCount} AS SIGNED)
+			</if>
+				and goods_id in (select id from th_goods where (goods_id is null or goods_id ='') and isDelete='1')
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+		order by createTime desc
+	</select>
+
+	<update id="update" parameterType="Inventory">
+		update th_inventory
+		<set>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				goods_id=#{goods.id},
+			</if>
+			<if test="count != null and count != ''">
+				count=#{count},
+			</if>
+			<if test="money != null and money != ''">
+				money=#{money},
+			</if>
+			<if test="storage != null and storage.id != null and storage.id != ''">
+				storage_id=#{storage.id},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+</mapper>

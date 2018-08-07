@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.record.dao.manual.RecordDAO">
+	<resultMap type="Record" id="resultRecord">
+		<id column="id" property="id" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="qrcode" column="qrcode_id" select="com.unitever.module.qrcode.dao.manual.QrcodeDAO.get" />
+		<association property="storage" column="storage_id" select="com.unitever.module.storage.dao.manual.StorageDAO.get" />
+	</resultMap>
+
+	<select id="get" resultMap="resultRecord" parameterType="String">
+		select * from th_record
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultRecord">
+		select * from th_record order by createTime desc
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_record where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="Record">
+		insert into
+		th_record(id,qrcode_id,storage_id,createTime,ft,fu)
+		value(#{id},#{qrcode.id},#{storage.id},#{createTime},#{ft},#{fu})
+	</insert>
+
+	<select id="getCountByRecord" resultType="Integer" parameterType="Record">
+		select count(*) From th_record
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="qrcode != null and qrcode.id != null and qrcode.id != ''">
+				and qrcode_id=#{qrcode.id}
+			</if>
+			<if test="storage != null and storage.id != null and storage.id != ''">
+				and customer_id=#{customer.id}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+	</select>
+
+	<select id="getRecordByRecord" resultMap="resultRecord" parameterType="Record">
+		select * From th_record
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="qrcode != null and qrcode.id != null and qrcode.id != ''">
+				and qrcode_id=#{qrcode.id}
+			</if>
+			<if test="storage != null and storage.id != null and storage.id != ''">
+				and customer_id=#{customer.id}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+		order by createTime desc
+	</select>
+
+	<update id="update" parameterType="Record">
+		update th_record
+		<set>
+			<if test="qrcode != null and qrcode.id != null and qrcode.id != ''">
+				qrcode_id=#{qrcode.id},
+			</if>
+			<if test="storage != null and storage.id != null and storage.id != ''">
+				customer_id=#{customer.id},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+</mapper>

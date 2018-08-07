@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.eticketoutRecord.dao.manual.EticketOutRecordDAO">
+	<resultMap type="EticketOutRecord" id="resultEticketOutRecord">
+		<id column="id" property="id" />
+		<result column="createDate" property="createDate" />
+		<result column="state" property="state" />
+		<result column="remark" property="remark" />
+		<result column="code" property="code" />
+		<result column="endDate" property="endDate" />
+		<result column="isHide" property="isHide" />
+		<result column="ft" property="ft" />
+		<result column="fu" property="ft" />
+		<result column="lt" property="ft" />
+		<result column="lu" property="ft" />
+		<association property="customer" column="customer_id" select="com.unitever.module.customer.dao.manual.CustomerDAO.get"/>
+		<association property="eticket" column="eticket_id" select="com.unitever.module.eticket.dao.manual.EticketDAO.get"/>
+	</resultMap>
+	
+	<resultMap type="EticketOutRecordCountVo" id="resultEticketOutRecordCountVo">
+		<result column="outEticketCount" property="outEticketCount" />
+		<result column="outEticketMoneyCount" property="outEticketMoneyCount" />
+		<association property="customer" column="customer_id" select="com.unitever.module.customer.dao.manual.CustomerDAO.get"/>
+		<association property="eticket" column="eticket_id" select="com.unitever.module.eticket.dao.manual.EticketDAO.get"/>
+	</resultMap>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_eticket_outrecord
+		id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="EticketOutRecord">
+		insert into th_eticket_outrecord(id,createDate,customer_id,eticket_id,state,remark,code,ft,fu,isHide)
+		value(#{id},#{createDate},#{customer.id},#{eticket.id},#{state},#{remark},#{code},#{ft},#{fu},'2')
+	</insert>
+	
+	<select id="get" resultMap="resultEticketOutRecord" parameterType="String">
+		select
+			etiout.*,DATE_ADD(etiout.createDate, INTERVAL eti.dateLimit+1 DAY) endDate
+		from
+			th_eticket_outrecord etiout,th_eticket eti
+		where
+			etiout.eticket_id = eti.id 
+			and etiout.id=#{id}
+	</select>
+
+<!-- 依据电子券发放记录code获取电子券发放记录 -->
+	<select id="getEticketOutRecordByCode" resultMap="resultEticketOutRecord" parameterType="String">
+		select
+			etiout.*,DATE_ADD(etiout.createDate, INTERVAL eti.dateLimit+1 DAY) endDate
+		from
+			th_eticket_outrecord etiout,th_eticket eti
+		where
+			etiout.eticket_id = eti.id 
+			and etiout.code=#{eticketOutCode}
+	</select>
+
+<!--  获取客户可用电子券列表 -->
+	<select id="getCustomerToUseEticketList" resultMap="resultEticketOutRecord" parameterType="String">
+		select
+			etiout.*,DATE_ADD(etiout.createDate, INTERVAL eti.dateLimit+1 DAY) endDate
+		from
+			th_eticket_outrecord etiout,th_eticket eti
+		where
+			etiout.eticket_id = eti.id 
+			and etiout.isHide='2'
+			and etiout.state='1'
+			and etiout.customer_id=#{customerId}
+			and (eti.useStore_id=#{storeId} or eti.useStore_id is null or eti.useStore_id='')
+			and cast(#{otherOrderPayMoney} AS decimal(38,2))&gt;=cast(eti.useLimit AS decimal(38,2))
+			and DATE_ADD(etiout.createDate, INTERVAL eti.dateLimit+1 DAY)&gt;=now()
+		order by createDate desc
+	</select>
+
+	<select id="getAll" resultMap="resultEticketOutRecord">
+		select
+			etiout.*,DATE_ADD(etiout.createDate, INTERVAL eti.dateLimit+1 DAY) endDate
+		from
+			th_eticket_outrecord etiout,th_eticket eti
+		where
+			etiout.eticket_id = eti.id
+		order by createDate desc
+	</select>
+	<!-- 获取用户某种电子卷 -->
+	<select id="getAllByStateAndCustomerId" resultMap="resultEticketOutRecord">
+		select
+			etiout.*,DATE_ADD(etiout.createDate, INTERVAL eti.dateLimit+1 DAY) endDate
+		from
+			th_eticket_outrecord etiout,th_eticket eti
+		where
+			etiout.eticket_id = eti.id
+			and etiout.customer_id=#{customerId}
+			and etiout.state=#{state}
+		order by createDate desc
+	</select>
+
+<!-- 获取所有未使用电子券 -->
+	<select id="getAllNoUseEticketOutRecord" resultMap="resultEticketOutRecord">
+		select
+			etiout.*,DATE_ADD(etiout.createDate, INTERVAL eti.dateLimit+1 DAY) endDate
+		from
+			th_eticket_outrecord etiout,th_eticket eti
+		where
+			etiout.eticket_id = eti.id 
+			and etiout.state='1'
+		order by createDate desc
+	</select>
+
+	<select id="getCountByObject" resultType="Integer" parameterType="EticketOutRecord">
+		select count(*) from
+			th_eticket_outrecord etiout,th_eticket eti
+		<where>
+			etiout.eticket_id = eti.id 
+			<if test="id != null and id != ''">
+				and etiout.id=#{id}
+			</if>
+			<if test="createDate != null and createDate != ''">
+				and etiout.createDate=#{createDate}
+			</if>
+			<if test="remark != null and remark != ''">
+				and etiout.remark=#{remark}
+			</if>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				and etiout.customer_id=#{customer.id}
+			</if>
+			<if test="eticket != null and eticket.id != null and eticket.id != ''">
+				and etiout.eticket_id=#{eticket.id}
+			</if>
+			<if test="eticket != null and eticket.outType != null and eticket.outType != ''">
+				and etiout.eticket_id=eti.id
+				and eti.outType=#{eticket.outType}
+			</if>
+			<if test="state != null and state != ''">
+				and etiout.state=#{state}
+			</if>
+			<if test="code != null and code != ''">
+				and etiout.code=#{code}
+			</if>
+			<if test="startDate_select != null and startDate_select != ''">
+				and etiout.createDate&gt;=#{startDate_select}
+			</if>
+			<if test="endDate_select != null and endDate_select != ''">
+				and etiout.createDate&lt;=#{endDate_select}
+			</if>
+		</where>
+	</select>
+
+	<select id="getOutRecordByOutRecord" resultMap="resultEticketOutRecord" parameterType="EticketOutRecord">
+		select
+			etiout.*,DATE_ADD(etiout.createDate, INTERVAL eti.dateLimit+1 DAY) endDate
+		from
+			th_eticket_outrecord etiout,th_eticket eti
+		<where>
+			etiout.eticket_id = eti.id 
+			<if test="id != null and id != ''">
+				and etiout.id=#{id}
+			</if>
+			<if test="createDate != null and createDate != ''">
+				and etiout.createDate=#{createDate}
+			</if>
+			<if test="remark != null and remark != ''">
+				and etiout.remark=#{remark}
+			</if>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				and etiout.customer_id=#{customer.id}
+			</if>
+			<if test="eticket != null and eticket.id != null and eticket.id != ''">
+				and etiout.eticket_id=#{eticket.id}
+			</if>
+			<if test="eticket != null and eticket.outType != null and eticket.outType != ''">
+				and etiout.eticket_id=eti.id
+				and eti.outType=#{eticket.outType}
+			</if>
+			<if test="state != null and state != ''">
+				and etiout.state=#{state}
+			</if>
+			<if test="code != null and code != ''">
+				and etiout.code=#{code}
+			</if>
+			<if test="startDate_select != null and startDate_select != ''">
+				and etiout.createDate&gt;=#{startDate_select}
+			</if>
+			<if test="endDate_select != null and endDate_select != ''">
+				and etiout.createDate&lt;=#{endDate_select}
+			</if>
+		</where>
+		order by createDate desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="EticketOutRecord">
+		update th_eticket_outrecord
+		<set>
+			<if test="createDate != null and createDate != ''">
+				createDate=#{createDate},
+			</if>
+			<if test="remark != null and remark != ''">
+				remark=#{remark},
+			</if>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				customer_id=#{customer.id},
+			</if>
+			<if test="eticket != null and eticket.id != null and eticket.id != ''">
+				eticket_id=#{eticket.id},
+			</if>
+			<if test="state != null and state != ''">
+				state=#{state},
+			</if>
+			<if test="isHide != null and isHide != ''">
+				isHide=#{isHide},
+			</if>
+			<if test="code != null and code != ''">
+				code=#{code},
+			</if>
+			<if test="'lt' != null and 'lt' != ''" >lt=#{lt},</if>
+			<if test="lu != null and lu != ''">lu=#{lu},</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+<!-- 设置电子券为已使用 -->
+	<update id="setEticketUsedByEticketOutRecordId" parameterType="String">
+		update th_eticket_outrecord set state='2' where id=#{eticketOutRecordId} and state='1'
+	</update>
+
+<!-- 设置电子券过期失效 -->
+	<update id="eticketOutRecordFail" parameterType="String">
+		update th_eticket_outrecord set state='3' where id=#{eticketOutRecordId} and state='1'
+	</update>
+</mapper>

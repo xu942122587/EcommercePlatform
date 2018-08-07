@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.area.dao.manual.AreaDAO">
+	<resultMap type="Area" id="resultArea">
+		<id column="id" property="id" />
+		<result column="content" property="content" />
+		<result column="createTime" property="createTime" />
+		<result column="state" property="state" />
+		<association property="area" column="patientArea" select="com.unitever.module.area.dao.manual.AreaDAO.get"></association>
+	</resultMap>
+
+	<select id="get" resultMap="resultArea" parameterType="String">
+		select * from th_area
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultArea">
+		select * from th_area
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_area
+		where id=#{id};
+	</delete>
+	<delete id="deleteAreaByStoreId" parameterType="String">
+		delete from th_area
+		where
+		store_id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="Area">
+		insert into
+		th_area(id,content,state,createTime)
+		value(#{id},#{content},#{state},#{createTime})
+	</insert>
+
+	<select id="changeArea" resultMap="resultArea">
+		select * From th_area
+		where id in 
+		<foreach item="item" index="index" collection="area_ids" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+		and state=1
+	</select>
+	<select id="noChangeArea" resultMap="resultArea">
+		select * From th_area
+		where id not in 
+		<foreach item="item" index="index" collection="area_ids" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+		and patientArea=#{cityArea_id} and state=1
+	</select>
+	
+	<select id="getAreaByArea" resultMap="resultArea"
+		parameterType="Area">
+		select * From th_area
+		<where>
+			1=1
+			<if test="id != null">
+				and id=#{id}
+			</if>
+			<if test="createTime != null">
+				and createTime=#{createTime}
+			</if>
+			<if test="content != null and content != ''">
+				and content=#{content}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="area != null and area.id != ''">
+				and patientArea=#{area.id}
+			</if>
+			<if test="area == null or area.id == ''">
+				and patientArea is null
+			</if>
+		</where>
+	</select>
+
+	<update id="update" parameterType="Area">
+		update th_area
+		<set>
+			<if test="createTime != null">
+				createTime=#{createTime},
+			</if>
+			<if test="content != null and content != ''">
+				content=#{content},
+			</if>
+			<if test="state != null and state != ''">
+				state=#{state},
+			</if>
+			<if test="area != null and area.id != ''">
+				patientArea=#{area.id},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+</mapper>

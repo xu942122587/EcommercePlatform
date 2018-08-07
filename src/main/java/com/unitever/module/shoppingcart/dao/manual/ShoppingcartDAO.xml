@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.shoppingcart.dao.manual.ShoppingcartDAO">
+	<resultMap type="Shoppingcart" id="resultShoppingcart">
+		<id column="id" property="id" />
+		<result column="count" property="count" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="goods" column="goods_id" select="com.unitever.module.goods.dao.manual.GoodsDAO.get" />
+		<association property="customer" column="customer_id" select="com.unitever.module.customer.dao.manual.CustomerDAO.get" />
+	</resultMap>
+
+	<select id="get" resultMap="resultShoppingcart" parameterType="String">
+		select * from th_shoppingcart
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultShoppingcart">
+		select * from th_shoppingcart order by createTime desc
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_shoppingcart where id=#{id};
+	</delete>
+
+	<!-- 依据门店ID删除会员购物车商品 -->
+	<delete id="deleteByStoreId" parameterType="String">
+		DELETE from th_shoppingcart WHERE goods_id in (SELECT id FROM th_goods WHERE store_id=#{storeId})
+	</delete>
+
+	<!-- 获取用户某商品购物车 -->
+	<select id="getShoppingcartByCustomerIdAndGoodsId" resultMap="resultShoppingcart">
+		SELECT * FROM th_shoppingcart WHERE customer_id=#{customerId} and goods_id=#{goodsId}
+	</select>
+	
+	<!-- 获取用户购物车 -->
+	<select id="getShoppingcartByCustomerId" resultMap="resultShoppingcart">
+		SELECT * FROM th_shoppingcart 
+		WHERE customer_id=#{customerId}
+				and goods_id in (select id from th_goods where goods_id in (select id from th_goods where isDelete='1' and isVisible='1' and isAbnormal='2') 
+				and store_id in (select id from th_store where state='1'))
+	</select>
+	
+	<!-- 获取购物车ByList -->
+	<select id="getShoppingcartByShoppingcartList" resultMap="resultShoppingcart">
+		SELECT * FROM th_shoppingcart WHERE 0&lt;INSTR(#{shoppingcartList},id)
+	</select>
+
+	<insert id="save" parameterType="Shoppingcart">
+		insert into
+		th_shoppingcart(id,goods_id,customer_id,count,createTime,ft,fu)
+		value(#{id},#{goods.id},#{customer.id},#{count},#{createTime},#{ft},#{fu})
+	</insert>
+
+	<select id="getCountByShoppingcart" resultType="Integer" parameterType="Shoppingcart">
+		select count(*) From th_shoppingcart
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				and goods_id=#{goods.id}
+			</if>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				and customer_id=#{customer.id}
+			</if>
+			<if test="count != null and count != ''">
+				and count=#{count}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+	</select>
+
+	<select id="getShoppingcartByShoppingcart" resultMap="resultShoppingcart" parameterType="Shoppingcart">
+		select * From th_shoppingcart
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				and goods_id=#{goods.id}
+			</if>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				and customer_id=#{customer.id}
+			</if>
+			<if test="count != null and count != ''">
+				and count=#{count}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+		order by createTime desc
+	</select>
+
+	<update id="update" parameterType="Shoppingcart">
+		update th_shoppingcart
+		<set>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				goods_id=#{goods.id},
+			</if>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				customer_id=#{customer.id},
+			</if>
+			<if test="count != null and count != ''">
+				count=#{count},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+</mapper>

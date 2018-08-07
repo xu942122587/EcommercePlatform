@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.allocation.dao.manual.AllocationDAO">
+	<resultMap type="Allocation" id="resultAllocation">
+		<id column="id" property="id" />
+		<result column="remark" property="remark" />
+		<result column="allocationCode" property="allocationCode" />
+		<result column="state" property="state" />
+		<result column="isDelete" property="isDelete" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="outStorage" column="outStorage_id" select="com.unitever.module.storage.dao.manual.StorageDAO.get" />
+		<association property="inStorage" column="inStorage_id" select="com.unitever.module.storage.dao.manual.StorageDAO.get" />
+		<association property="store" column="store_id" select="com.unitever.module.store.dao.manual.StoreDAO.get" />
+		<association column="fu" property="fu_user" select="com.unitever.auth.user.dao.manual.UserDAO.get" />
+	</resultMap>
+
+	<select id="get" resultMap="resultAllocation" parameterType="String">
+		select * from th_allocation
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultAllocation">
+		select * from th_allocation where isDelete='1' order by createTime desc
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_allocation where id=#{id}
+	</delete>
+
+	<insert id="save" parameterType="Allocation">
+		insert into
+		th_allocation(id,allocationCode,outStorage_id,inStorage_id,store_id,state,remark,isDelete,createTime,ft,fu)
+		value(#{id},#{allocationCode},#{outStorage.id},#{inStorage.id},#{store.id},#{state},#{remark},#{isDelete},#{createTime},#{ft},#{fu})
+	</insert>
+
+	<select id="getCountByObject" resultType="Integer" parameterType="Allocation">
+		select count(*) From th_allocation
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="outStorage != null and outStorage.id != null and outStorage.id != ''">
+				and outStorage_id=#{outStorage.id}
+			</if>
+			<if test="inStorage != null and inStorage.id != null and inStorage.id != ''">
+				and inStorage_id=#{inStorage.id}
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				and store_id=#{store.id}
+			</if>
+			<if test="allocationCode != null and allocationCode != ''">
+				and allocationCode like CONCAT('%','${allocationCode}','%')
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1'
+		</where>
+	</select>
+
+	<select id="getAllocationByAllocation" resultMap="resultAllocation" parameterType="Allocation">
+		select * From th_allocation
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id} 
+			</if>
+			<if test="outStorage != null and outStorage.id != null and outStorage.id != ''">
+				and outStorage_id=#{outStorage.id}
+			</if>
+			<if test="inStorage != null and inStorage.id != null and inStorage.id != ''">
+				and inStorage_id=#{inStorage.id}
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				and store_id=#{store.id}
+			</if>
+			<if test="allocationCode != null and allocationCode != ''">
+				and allocationCode like CONCAT('%','${allocationCode}','%')
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1'
+		</where>
+			order by createTime desc
+			<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="Allocation">
+		update th_allocation
+		<set>
+			<if test="outStorage != null and outStorage.id != null and outStorage.id != ''">
+				outStorage_id=#{outStorage.id},
+			</if>
+			<if test="inStorage != null and inStorage.id != null and inStorage.id != ''">
+				inStorage_id=#{inStorage.id},
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				store_id=#{store.id},
+			</if>
+			<if test="allocationCode != null and allocationCode != ''">
+				allocationCode=#{allocationCode},
+			</if>
+			<if test="state != null and state != ''">
+				state=#{state},
+			</if>
+			<if test="remark != null and remark != ''">
+				remark=#{remark},
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				isDelete=#{isDelete},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+</mapper>

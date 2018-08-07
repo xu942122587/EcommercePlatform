@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.customer.dao.manual.CustomerDAO">
+	<resultMap type="Customer" id="resultCustomer">
+		<id column="id" property="id" />
+		<result column="name" property="name" />
+		<result column="birthday" property="birthday" />
+		<result column="phone" property="phone" />
+		<result column="loginbirthday" property="loginbirthday" />
+		<result column="money" property="money" />
+		<result column="paybirthday" property="paybirthday" />
+		<result column="isBlank" property="isBlank" />
+		<result column="sumGuideUser" property="sumGuideUser" />
+		<result column="sumRegisterBonusMoney" property="sumRegisterBonusMoney" />
+		<result column="registerBonusMoney" property="registerBonusMoney" />
+		<result column="payCode" property="payCode" />
+		<result column="payCodeCreateTime" property="payCodeCreateTime" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="employee" column="employee_id" select="com.unitever.module.employee.dao.manual.EmployeeDAO.get" />
+		<association column="guideUser_id" property="guideUser" select="com.unitever.auth.user.dao.manual.UserDAO.get" />
+		<association column="id" property="upSumNumber" select="com.unitever.module.order.dao.manual.OrderDAO.getUpSumNumberByCustomerId" />
+		<association column="id" property="upPayMoney" select="com.unitever.module.order.dao.manual.OrderDAO.getUpPayMoneyByCustomerId" />
+		<association column="id" property="downSumNumber" select="com.unitever.module.order.dao.manual.OrderDAO.getDownSumNumberByCustomerId" />
+		<association column="id" property="downPayMoney" select="com.unitever.module.order.dao.manual.OrderDAO.getDownPayMoneyByCustomerId" />
+	</resultMap>
+
+	<select id="get" resultMap="resultCustomer" parameterType="String">
+		select * from th_customer
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultCustomer">
+		select * from th_customer where isBlank='1' order by createTime desc 
+	</select>
+	
+	<!-- 根据时间拿取用户数量  -->
+	<select id="getCountCustomerByTime" resultType="String">
+		select count(*) from th_customer where isBlank='1' and createTime&gt;=#{startDate} and createTime&lt;=#{endDate}
+	</select>
+	
+	<!-- 拿取所有注册用户数量 -->
+	<select id="getCountCustomer" resultType="String">
+		select count(*) from th_customer where isBlank='1'
+	</select>
+	
+	<!-- 根据导购获取上月的注册总人数 -->
+	<select id="getCountCustomerByGuideUserInLastMonth" resultType="String">
+		select count(*) from th_customer where isBlank='1' and guideUser_id=#{guideUserId}
+		and createTime&gt;=(select date_sub(date_sub(date_format(now(),'%y-%m-%d'),interval extract(day from now())-1 day),interval 1 month))
+		and createTime&lt;=(select date_sub(date_sub(date_format(now(),'%y-%m-%d'),interval extract(day from now()) day),interval 0 month) as date)
+	</select>
+
+	<select id="getThisMonthBirthdayCustomerList" resultMap="resultCustomer">
+		select * from th_customer where isBlank='1' and DATE_FORMAT(birthday,'%m')=DATE_FORMAT(now(),'%m')
+	</select>
+
+<!-- 获取有推荐人的用户并根据推荐人分组 -->
+	<select id="getHaveGuideUserCustomer" resultMap="resultCustomer">
+		select *,count(*) as sumGuideUser,sum(registerBonusMoney) as sumRegisterBonusMoney from th_customer
+		<where>
+			1=1
+			<if test="guideUserId != null and guideUserId != ''">
+				and guideUser_id=#{guideUserId}
+			</if>
+		</where>
+		and guideUser_id is not null and guideUser_id!='' and isBlank='1' group by guideUser_id 
+	</select>
+	
+<!-- 获取所有没被拉黑的客户列表 -->
+	<select id="getAllNoBlankCustomer" resultMap="resultCustomer">
+		select * from th_customer where isBlank='1' order by createTime desc
+	</select>
+	
+<!-- 根据推荐人获取用户 -->
+	<select id="getCustomerByguideUserId" resultMap="resultCustomer">
+		select * from th_customer where guideUser_id=#{guideUserId} and isBlank='1' order by createTime desc
+	</select>
+	
+<!-- 通过微信用户ID获取系统中注册的客户ID（客户绑定的微信号即微信用户ID） -->
+	<select id="getCustomerByEmployeeId" resultMap="resultCustomer">
+		select * from th_customer where employee_id=#{employeeId} and isBlank='1'
+	</select>
+
+<!-- 通过phone获取customer -->
+	<select id="getCustomerByPhone" resultMap="resultCustomer">
+		SELECT *
+		FROM th_customer
+		where phone=#{phone} and isBlank='1'
+	</select>
+
+<!-- 通过微信openid获取customer -->
+	<select id="getCustomerByOpenId" resultMap="resultCustomer">
+		SELECT cus.*
+		FROM th_customer cus,
+			th_employee emp
+		where cus.employee_id=emp.id
+			and emp.openid=#{openId} and cus.isBlank='1';
+	</select>
+
+<!-- 获取所有非微信管理员的客户 -->
+	<select id="getCustomerNoAdmin" resultMap="resultCustomer">
+		SELECT *
+		FROM th_customer cus,
+			th_employee emp
+		where cus.employee_id=emp.id
+			and emp.openid not in (SELECT openid FROM dk_admin) and cus.isBlank='1';
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_customer where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="Customer">
+		insert into
+		th_customer(id,name,birthday,phone,loginPassword,money,payPassword,
+				isBlank,registerBonusMoney,employee_id,guideUser_id,createTime,ft,fu)
+		value(#{id},#{name},#{birthday},#{phone},#{loginPassword},#{money},#{payPassword},
+				#{isBlank},#{registerBonusMoney},#{employee.id},#{guideUser.id},#{createTime},#{ft},#{fu})
+	</insert>
+
+	<update id="doLogout" parameterType="Customer">
+		update th_customer set employee_id=null WHERE id=#{id} and isBlank='1'
+	</update>
+
+<!-- 消费者天和钱包增加 -->
+	<update id="addTianheMoney">
+		update th_customer set money=ROUND((CAST(IFNULL(money,'0') AS DECIMAL(38,2))+CAST(#{promotionMoney} AS DECIMAL(38,2))),2) WHERE id=#{customerId}
+	</update>
+
+<!-- 消费者天和钱包减少 -->
+	<update id="subTianheMoney">
+		update th_customer 
+		set money=ROUND((CAST(IFNULL(money,'0') AS DECIMAL(38,2))-CAST(#{subMoney} AS DECIMAL(38,2))),2)
+		WHERE id=#{customerId} 
+				and CAST(IFNULL(money,'0') AS DECIMAL(38,2))&gt;=CAST(#{subMoney} AS DECIMAL(38,2))
+	</update>
+
+<!-- 保存支付动态密码 -->
+	<update id="sendCustomerPayCode">
+		update th_customer cus, 
+			(
+				select count(*) as payCodeCount 
+				from th_customer 
+				where payCode=#{payCode} 
+					and UNIX_TIMESTAMP(payCodeCreateTime)-UNIX_TIMESTAMP(NOW())&lt;=600 
+					and UNIX_TIMESTAMP(payCodeCreateTime)&lt;UNIX_TIMESTAMP(NOW())
+			) as payCodeCountTable
+		set cus.payCode=#{payCode},cus.payCodeCreateTime=now()
+		WHERE phone=#{customerPhone} and 0&gt;=payCodeCountTable.payCodeCount
+	</update>
+
+<!-- 清空支付动态密码 -->
+	<update id="clearPayCode">
+		update th_customer 
+		set payCode=null,
+			payCodeCreateTime=null
+		WHERE id=#{customerId}
+	</update>
+
+	<select id="getCountByObject" resultType="Integer" parameterType="Customer">
+		select count(*) From th_customer
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="name != null and name != ''">
+				and name like CONCAT('%','${name}','%')
+			</if>
+			<if test="birthday != null and birthday != ''">
+				and birthday=#{birthday}
+			</if>
+			<if test="phone != null and phone != ''">
+				and phone=#{phone}
+			</if>
+			<if test="loginPassword != null and loginPassword != ''">
+				and loginPassword=#{loginPassword}
+			</if>
+			<if test="money != null and money != ''">
+				and money=#{money}
+			</if>
+			<if test="payPassword != null and payPassword != ''">
+				and payPassword=#{payPassword}
+			</if>
+			<if test="isBlank != null and isBlank != ''">
+				and isBlank=#{isBlank}
+			</if>
+			<if test="registerBonusMoney != null and registerBonusMoney != ''">
+				and registerBonusMoney=#{registerBonusMoney}
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				and guideUser_id=#{guideUser.id}
+			</if>
+			<if test="employee != null and employee.id != null and employee.id != ''">
+				and employee_id=#{employee.id}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and birthday&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and birthday&lt;=#{endDate}
+			</if>
+		</where>
+		and isBlank='1'
+	</select>
+	
+	<select id="getCountByCustomerForRegist" resultType="Integer" parameterType="Customer">
+		select count(*) From th_customer
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="name != null and name != ''">
+				and name like CONCAT('%','${name}','%')
+			</if>
+			<if test="birthday != null and birthday != ''">
+				and birthday=#{birthday}
+			</if>
+			<if test="phone != null and phone != ''">
+				and phone=#{phone}
+			</if>
+			<if test="loginPassword != null and loginPassword != ''">
+				and loginPassword=#{loginPassword}
+			</if>
+			<if test="money != null and money != ''">
+				and money=#{money}
+			</if>
+			<if test="payPassword != null and payPassword != ''">
+				and payPassword=#{payPassword}
+			</if>
+			<if test="isBlank != null and isBlank != ''">
+				and isBlank=#{isBlank}
+			</if>
+			<if test="registerBonusMoney != null and registerBonusMoney != ''">
+				and registerBonusMoney=#{registerBonusMoney}
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				and guideUser_id=#{guideUser.id}
+			</if>
+			<if test="employee != null and employee.id != null and employee.id != ''">
+				and employee_id=#{employee.id}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and birthday&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and birthday&lt;=#{endDate}
+			</if>
+		</where>
+	</select>
+
+	<select id="getCustomerByCustomer" resultMap="resultCustomer" parameterType="Customer">
+		select * From th_customer
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="name != null and name != ''">
+				and name like CONCAT('%','${name}','%')
+			</if>
+			<if test="birthday != null and birthday != ''">
+				and birthday=#{birthday}
+			</if>
+			<if test="phone != null and phone != ''">
+				and phone=#{phone}
+			</if>
+			<if test="loginPassword != null and loginPassword != ''">
+				and loginPassword=#{loginPassword}
+			</if>
+			<if test="money != null and money != ''">
+				and money=#{money}
+			</if>
+			<if test="payPassword != null and payPassword != ''">
+				and payPassword=#{payPassword}
+			</if>
+			<if test="isBlank != null and isBlank != ''">
+				and isBlank=#{isBlank}
+			</if>
+			<if test="registerBonusMoney != null and registerBonusMoney != ''">
+				and registerBonusMoney=#{registerBonusMoney}
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				and guideUser_id=#{guideUser.id}
+			</if>
+			<if test="employee != null and employee.id != null and employee.id != ''">
+				and employee_id=#{employee.id}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and birthday&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and birthday&lt;=#{endDate}
+			</if>
+		</where>
+		and isBlank='1'
+		order by createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="Customer">
+		update th_customer
+		<set>
+			<if test="name != null and name != ''">
+				name=#{name},
+			</if>
+			<if test="birthday != null and birthday != ''">
+				birthday=#{birthday},
+			</if>
+			<if test="phone != null and phone != ''">
+				phone=#{phone},
+			</if>
+			<if test="loginPassword != null and loginPassword != ''">
+				loginPassword=#{loginPassword},
+			</if>
+			<if test="money != null and money != ''">
+				money=#{money},
+			</if>
+			<if test="payPassword != null and payPassword != ''">
+				payPassword=#{payPassword},
+			</if>
+			<if test="isBlank != null and isBlank != ''">
+				isBlank=#{isBlank},
+			</if>
+			<if test="registerBonusMoney != null and registerBonusMoney != ''">
+				registerBonusMoney=#{registerBonusMoney},
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				guideUser_id=#{guideUser.id},
+			</if>
+			<if test="employee != null and employee.id != null and employee.id != ''">
+				employee_id=#{employee.id},
+			</if>
+			<if test="payCode != null and payCode != ''">
+				payCode=#{payCode},
+			</if>
+			<if test="payCodeCreateTime != null and payCodeCreateTime != ''">
+				payCodeCreateTime=#{payCodeCreateTime},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+	
+</mapper>

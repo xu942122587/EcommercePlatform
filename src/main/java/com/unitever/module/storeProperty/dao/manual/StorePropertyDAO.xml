@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.storeProperty.dao.manual.StorePropertyDAO">
+	<resultMap type="StoreProperty" id="resultStoreProperty">
+		<id column="id" property="id" />
+		<result column="name" property="name" />
+		<result column="number" property="number" />
+		<result column="remark" property="remark" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="store" column="store_id" select="com.unitever.module.store.dao.manual.StoreDAO.get" />
+	</resultMap>
+
+	<select id="get" resultMap="resultStoreProperty" parameterType="String">
+		select * from th_store_property
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultStoreProperty">
+		select * from th_store_property order by createTime desc
+	</select>
+
+<!-- 依据门店ID获取门店固定资产list -->
+	<select id="getAllByStoreId" resultMap="resultStoreProperty">
+		select * from th_store_property where store_id=#{storeId} order by createTime desc
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_store_property where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="StoreProperty">
+		insert into
+		th_store_property(id,store_id,name,number,remark,createTime,ft,fu)
+		value(#{id},#{store.id},#{name},#{number},#{remark},#{createTime},#{ft},#{fu})
+	</insert>
+
+	<select id="getCountByStoreProperty" resultType="Integer" parameterType="StoreProperty">
+		select count(*) From th_store_property
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				and store_id=#{store.id}
+			</if>
+			<if test="name != null and name != ''">
+				and name=#{name}
+			</if>
+			<if test="number != null and number != ''">
+				and number=#{number}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+	</select>
+
+	<select id="getStorePropertyByStoreProperty" resultMap="resultStoreProperty" parameterType="StoreProperty">
+		select * From th_store_property
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				and store_id=#{store.id}
+			</if>
+			<if test="name != null and name != ''">
+				and name=#{name}
+			</if>
+			<if test="number != null and number != ''">
+				and number=#{number}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+		order by createTime desc
+	</select>
+
+	<update id="update" parameterType="StoreProperty">
+		update th_store_property
+		<set>
+			<if test="store != null and store.id != null and store.id != ''">
+				store_id=#{store.id},
+			</if>
+			<if test="name != null and name != ''">
+				name=#{name},
+			</if>
+			<if test="number != null and number != ''">
+				number=#{number},
+			</if>
+			<if test="remark != null and remark != ''">
+				remark=#{remark},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+</mapper>

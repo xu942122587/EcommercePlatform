@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.promotionLadder.dao.manual.PromotionLadderDAO">
+	<resultMap type="PromotionLadder" id="resultPromotionLadder">
+		<id column="id" property="id" />
+		<result column="ladderStart" property="ladderStart" />
+		<result column="promotionMoney" property="promotionMoney" />
+		<result column="goodsNumber" property="goodsNumber" />
+		<result column="goodsPrice" property="goodsPrice" />
+		<result column="goodsNumberBuy" property="goodsNumberBuy" />
+		<result column="isDelete" property="isDelete" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="promotion" column="promotion_id" select="com.unitever.module.promotion.dao.manual.PromotionDAO.get" />
+		<association property="goods" column="goods_id" select="com.unitever.module.goods.dao.manual.GoodsDAO.get" />
+	</resultMap>
+
+	<select id="get" resultMap="resultPromotionLadder" parameterType="String">
+		select * from th_promotion_ladder
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultPromotionLadder">
+		select * from th_promotion_ladder where isDelete='1' order by createTime desc
+	</select>
+
+<!-- 依据优惠活动ID获取活动阶梯条件list -->
+	<select id="getAllByPromotionId" resultMap="resultPromotionLadder">
+		select * from th_promotion_ladder where promotion_id=#{promotionId} and isDelete='1' order by CAST(ladderStart AS DECIMAL(38,2)) desc
+	</select>
+
+<!-- 删除一条数据 -->
+	<update id="delete" parameterType="String">
+		update th_promotion_ladder set isDelete='2' where id=#{id}
+	</update>
+
+	<insert id="save" parameterType="PromotionLadder">
+		insert into
+		th_promotion_ladder(id,promotion_id,ladderStart,promotionMoney,goodsNumber,goods_id,createTime,ft,fu,isDelete,goodsNumberBuy,goodsPrice)
+		value(#{id},#{promotion.id},#{ladderStart},#{promotionMoney},#{goodsNumber},#{goods.id},#{createTime},#{ft},#{fu},'1',#{goodsNumberBuy},#{goodsPrice})
+	</insert>
+
+	<select id="getCountByPromotionLadder" resultType="Integer" parameterType="PromotionLadder">
+		select count(*) From th_promotion_ladder
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="promotion != null and promotion.id != null and promotion.id != ''">
+				and promotion_id=#{promotion.id}
+			</if>
+			<if test="ladderStart != null and ladderStart != ''">
+				and ladderStart=#{ladderStart}
+			</if>
+			<if test="promotionMoney != null and promotionMoney != ''">
+				and promotionMoney=#{promotionMoney}
+			</if>
+			<if test="goodsNumber != null and goodsNumber != ''">
+				and goodsNumber=#{goodsNumber}
+			</if>
+			<if test="goodsNumberBuy != null and goodsNumberBuy != ''">
+				and goodsNumberBuy=#{goodsNumberBuy}
+			</if>
+			<if test="goodsPrice != null and goodsPrice != ''">
+				and goodsPrice=#{goodsPrice}
+			</if>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				and goods_id=#{goods.id}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1'
+		</where>
+	</select>
+
+	<select id="getPromotionLadderByPromotionLadder" resultMap="resultPromotionLadder" parameterType="PromotionLadder">
+		select * From th_promotion_ladder
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="promotion != null and promotion.id != null and promotion.id != ''">
+				and promotion_id=#{promotion.id}
+			</if>
+			<if test="ladderStart != null and ladderStart != ''">
+				and ladderStart=#{ladderStart}
+			</if>
+			<if test="promotionMoney != null and promotionMoney != ''">
+				and promotionMoney=#{promotionMoney}
+			</if>
+			<if test="goodsNumber != null and goodsNumber != ''">
+				and goodsNumber=#{goodsNumber}
+			</if>
+			<if test="goodsNumberBuy != null and goodsNumberBuy != ''">
+				and goodsNumberBuy=#{goodsNumberBuy}
+			</if>
+			<if test="goodsPrice != null and goodsPrice != ''">
+				and goodsPrice=#{goodsPrice}
+			</if>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				and goods_id=#{goods.id}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1'
+		</where>
+		order by createTime desc
+	</select>
+
+	<update id="update" parameterType="PromotionLadder">
+		update th_promotion_ladder
+		<set>
+			<if test="promotion != null and promotion.id != null and promotion.id != ''">
+				promotion_id=#{promotion.id},
+			</if>
+			<if test="ladderStart != null and ladderStart != ''">
+				ladderStart=#{ladderStart},
+			</if>
+			<if test="promotionMoney != null and promotionMoney != ''">
+				promotionMoney=#{promotionMoney},
+			</if>
+			<if test="goodsNumber != null and goodsNumber != ''">
+				goodsNumber=#{goodsNumber},
+			</if>
+			<if test="goodsNumberBuy != null and goodsNumberBuy != ''">
+				goodsNumberBuy=#{goodsNumberBuy},
+			</if>
+			<if test="goodsPrice != null and goodsPrice != ''">
+				goodsPrice=#{goodsPrice},
+			</if>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				goods_id=#{goods.id},
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				isDelete=#{isDelete},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+</mapper>

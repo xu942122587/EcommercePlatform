@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.bonus.dao.manual.BonusDAO">
+	<resultMap type="Bonus" id="resultBonus">
+		<id column="id" property="id" />
+		<result column="startMoney" property="startMoney" />
+		<result column="proportion" property="proportion" />
+		<result column="remark" property="remark" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+	</resultMap>
+
+	<select id="get" resultMap="resultBonus" parameterType="String">
+		select * from th_bonus
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultBonus">
+		select * from th_bonus order by createTime desc
+	</select>
+
+	<!-- 根据金额获取提成档位 -->
+	<select id="getProportionByStartMoney" resultMap="resultBonus">
+		select * from th_bonus where cast(startMoney AS decimal(38,2))&lt;=cast(#{startMoney} AS decimal(38,2))  order by cast(startMoney AS decimal(38,2)) desc LIMIT 0,1
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_bonus where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="Bonus">
+		insert into th_bonus(id,createTime,ft,fu,startMoney,proportion,remark)
+		value(#{id},#{createTime},#{ft},#{fu},#{startMoney},#{proportion},#{remark})
+	</insert>
+
+	<select id="getCountByObject" resultType="Integer" parameterType="Bonus">
+		select count(*) From th_bonus
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="startMoney != null and startMoney != ''">
+				and startMoney=#{startMoney}
+			</if>
+			<if test="proportion != null and proportion != ''">
+				and proportion=#{proportion}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+	</select>
+
+	<select id="getBonusByBonus" resultMap="resultBonus" parameterType="Bonus">
+		select * From th_bonus
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="startMoney != null and startMoney != ''">
+				and startMoney=#{startMoney}
+			</if>
+			<if test="proportion != null and proportion != ''">
+				and proportion=#{proportion}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+		order by createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="Bonus">
+		update th_bonus
+		<set>
+			<if test="startMoney != null and startMoney != ''">
+				startMoney=#{startMoney},
+			</if>
+			<if test="proportion != null and proportion != ''">
+				proportion=#{proportion},
+			</if>
+			<if test="remark != null and remark != ''">
+				remark=#{remark},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+</mapper>

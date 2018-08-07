@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.registerBonusDetil.dao.manual.RegisterBonusDetilDAO">
+	<resultMap type="RegisterBonusDetil" id="resultRegisterBonusDetil">
+		<id column="id" property="id" />
+		<result column="money" property="money" />
+		<result column="month" property="month" />
+		<result column="count" property="count" />
+		<result column="sumMoney" property="sumMoney" />
+		<result column="sumCount" property="sumCount" />
+		<result column="isPayMoney" property="isPayMoney" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association column="guideUser_id" property="guideUser" select="com.unitever.auth.user.dao.manual.UserDAO.get" />
+	</resultMap>
+
+	<select id="get" resultMap="resultRegisterBonusDetil" parameterType="String">
+		select * from th_register_bonus_detil
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultRegisterBonusDetil">
+		select * from th_register_bonus_detil order by createTime desc
+	</select>
+	
+	<!-- 推荐注册人数 -->
+	<select id="getRegisterBonusDetailSumCount" resultType="String">
+		SELECT IFNULL(ROUND(SUM(count),0),0) 
+		from th_register_bonus_detil
+		where month&gt;=#{startDate}
+			and month&lt;=#{endDate}
+			<if test="storeId != null and storeId != ''">
+				and guideUser_id in(select id from auth_user where store_id=#{storeId})
+			</if>
+			and isPayMoney='1'
+	</select>
+	
+	<!-- 推荐注册奖励金 -->
+	<select id="getRegisterBonusDetailSumMoney" resultType="String">
+		SELECT IFNULL(ROUND(SUM(money),2),0) 
+		from th_register_bonus_detil
+		where month&gt;=#{startDate}
+			and month&lt;=#{endDate}
+			<if test="storeId != null and storeId != ''">
+				and guideUser_id in(select id from auth_user where store_id=#{storeId})
+			</if>
+			and isPayMoney='1'
+	</select>
+	
+<!-- 根据用户分组获取注册提成记录 -->
+	<select id="getRegisterBonusDetilGroupByGuideUser" resultMap="resultRegisterBonusDetil">
+		select guideUser_id,sum(money) as sumMoney,sum(count) as sumCount from th_register_bonus_detil
+		<where>
+			1=1
+			<if test="guideUser != null and guideUser.username != null and guideUser.username != ''">
+				and guideUser_id in (select id from auth_user where username like CONCAT('%','#{guideUser.username}','%'))
+			</if>
+		</where>
+		group by guideUser_id order by sumCount desc
+	</select>
+	
+<!-- 根据GuideUserId获取提成记录详情 -->
+	<select id="getRegisterBonusDetilByGuideUserId" resultMap="resultRegisterBonusDetil">
+		select * from th_register_bonus_detil where guideUser_id=#{guideUserId} order by createTime desc
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_register_bonus_detil where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="RegisterBonusDetil">
+		insert into th_register_bonus_detil(id,createTime,ft,fu,money,month,count,isPayMoney,guideUser_id)
+		value(#{id},#{createTime},#{ft},#{fu},#{money},#{month},#{count},#{isPayMoney},#{guideUser.id})
+	</insert>
+
+	<select id="getCountByRegisterBonusDetil" resultType="Integer" parameterType="RegisterBonusDetil">
+		select count(*) From th_register_bonus_detil
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				and guideUser_id=#{guideUser.id}
+			</if>
+			<if test="money != null and money != ''">
+				and money=#{money}
+			</if>
+			<if test="month != null and month != ''">
+				and month=#{month}
+			</if>
+			<if test="count != null and count != ''">
+				and count=#{count}
+			</if>
+			<if test="isPayMoney != null and isPayMoney != ''">
+				and isPayMoney=#{isPayMoney}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+	</select>
+	
+	<select id="getCountByObject" resultType="Integer" parameterType="RegisterBonusDetil">
+		select count(*) From th_register_bonus_detil
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				and guideUser_id=#{guideUser.id}
+			</if>
+			<if test="money != null and money != ''">
+				and money=#{money}
+			</if>
+			<if test="month != null and month != ''">
+				and month=#{month}
+			</if>
+			<if test="count != null and count != ''">
+				and count=#{count}
+			</if>
+			<if test="isPayMoney != null and isPayMoney != ''">
+				and isPayMoney=#{isPayMoney}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+	</select>
+
+	<select id="getRegisterBonusDetilByRegisterBonusDetil" resultMap="resultRegisterBonusDetil" parameterType="RegisterBonusDetil">
+		select * From th_register_bonus_detil
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				and guideUser_id=#{guideUser.id}
+			</if>
+			<if test="money != null and money != ''">
+				and money=#{money}
+			</if>
+			<if test="month != null and month != ''">
+				and month=#{month}
+			</if>
+			<if test="count != null and count != ''">
+				and count=#{count}
+			</if>
+			<if test="isPayMoney != null and isPayMoney != ''">
+				and isPayMoney=#{isPayMoney}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+		order by CAST(money as SIGNED)
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="RegisterBonusDetil">
+		update th_register_bonus_detil
+		<set>
+			<if test="money != null and money != ''">
+				money=#{money},
+			</if>
+			<if test="month != null and month != ''">
+				month=#{month},
+			</if>
+			<if test="count != null and count != ''">
+				count=#{count},
+			</if>
+			<if test="isPayMoney != null and isPayMoney != ''">
+				isPayMoney=#{isPayMoney},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+</mapper>

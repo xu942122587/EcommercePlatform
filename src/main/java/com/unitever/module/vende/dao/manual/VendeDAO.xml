@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.vende.dao.manual.VendeDAO">
+	<resultMap type="Vende" id="resultVende">
+		<id column="id" property="id" />
+		<result column="name" property="name" />
+		<result column="chargeName" property="chargeName" />
+		<result column="chargePhone" property="chargePhone" />
+		<result column="address" property="address" />
+		<result column="bankName" property="bankName" />
+		<result column="bankCardNum" property="bankCardNum" />
+		<result column="brandHttpURI" property="brandHttpURI" />
+		<result column="remark" property="remark" />
+		<result column="email" property="email" />
+		<result column="isDelete" property="isDelete" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+	</resultMap>
+
+	<select id="get" resultMap="resultVende" parameterType="String">
+		select * from th_vende
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultVende">
+		select * from th_vende where isDelete='1' order by createTime desc
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_vende where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="Vende">
+		insert into
+		th_vende(id,name,chargeName,chargePhone,address,bankName,bankCardNum,brandHttpURI,
+				remark,createTime,ft,fu,email,isDelete)
+		value(#{id},#{name},#{chargeName},#{chargePhone},#{address},#{bankName},#{bankCardNum},#{brandHttpURI},
+				#{remark},#{createTime},#{ft},#{fu},#{email},#{isDelete})
+	</insert>
+
+	<select id="getCountByVende" resultType="Integer" parameterType="Vende">
+		select count(*) From th_vende
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="name != null and name != ''">
+				and name like CONCAT('%','${name}','%')
+			</if>
+			<if test="chargeName != null and chargeName != ''">
+				and chargeName=#{chargeName}
+			</if>
+			<if test="chargePhone != null and chargePhone != ''">
+				and chargePhone=#{chargePhone}
+			</if>
+			<if test="address != null and address != ''">
+				and address=#{address}
+			</if>
+			<if test="bankName != null and bankName != ''">
+				and bankName=#{bankName}
+			</if>
+			<if test="bankCardNum != null and bankCardNum != ''">
+				and bankCardNum=#{bankCardNum}
+			</if>
+			<if test="brandHttpURI != null and brandHttpURI != ''">
+				and brandHttpURI=#{brandHttpURI}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="email != null and email != ''">
+				and email=#{email}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1'
+		</where>
+	</select>
+	
+	<select id="getCountByObject" resultType="Integer" parameterType="Vende">
+		select count(*) From th_vende
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="name != null and name != ''">
+				and name like CONCAT('%','${name}','%')
+			</if>
+			<if test="chargeName != null and chargeName != ''">
+				and chargeName=#{chargeName}
+			</if>
+			<if test="chargePhone != null and chargePhone != ''">
+				and chargePhone=#{chargePhone}
+			</if>
+			<if test="address != null and address != ''">
+				and address=#{address}
+			</if>
+			<if test="bankName != null and bankName != ''">
+				and bankName=#{bankName}
+			</if>
+			<if test="bankCardNum != null and bankCardNum != ''">
+				and bankCardNum=#{bankCardNum}
+			</if>
+			<if test="brandHttpURI != null and brandHttpURI != ''">
+				and brandHttpURI=#{brandHttpURI}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="email != null and email != ''">
+				and email=#{email}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1'
+		</where>
+	</select>
+
+	<select id="getVendeByVende" resultMap="resultVende" parameterType="Vende">
+		select * From th_vende
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="name != null and name != ''">
+				and name like CONCAT('%','${name}','%')
+			</if>
+			<if test="chargeName != null and chargeName != ''">
+				and chargeName=#{chargeName}
+			</if>
+			<if test="chargePhone != null and chargePhone != ''">
+				and chargePhone=#{chargePhone}
+			</if>
+			<if test="address != null and address != ''">
+				and address=#{address}
+			</if>
+			<if test="bankName != null and bankName != ''">
+				and bankName=#{bankName}
+			</if>
+			<if test="bankCardNum != null and bankCardNum != ''">
+				and bankCardNum=#{bankCardNum}
+			</if>
+			<if test="brandHttpURI != null and brandHttpURI != ''">
+				and brandHttpURI=#{brandHttpURI}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="email != null and email != ''">
+				and email=#{email}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1'
+		</where>
+		order by createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="Vende">
+		update th_vende
+		<set>
+			<if test="name != null and name != ''">
+				name=#{name},
+			</if>
+			<if test="chargeName != null and chargeName != ''">
+				chargeName=#{chargeName},
+			</if>
+			<if test="chargePhone != null and chargePhone != ''">
+				chargePhone=#{chargePhone},
+			</if>
+			<if test="address != null and address != ''">
+				address=#{address},
+			</if>
+			<if test="bankName != null and bankName != ''">
+				bankName=#{bankName},
+			</if>
+			<if test="bankCardNum != null and bankCardNum != ''">
+				bankCardNum=#{bankCardNum},
+			</if>
+			<if test="brandHttpURI != null and brandHttpURI != ''">
+				brandHttpURI=#{brandHttpURI},
+			</if>
+			<if test="remark != null and remark != ''">
+				remark=#{remark},
+			</if>
+			<if test="email != null and email != ''">
+				email=#{email},
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				isDelete=#{isDelete},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+</mapper>

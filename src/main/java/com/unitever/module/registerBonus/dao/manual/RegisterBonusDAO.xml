@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.registerBonus.dao.manual.RegisterBonusDAO">
+	<resultMap type="RegisterBonus" id="resultRegisterBonus">
+		<id column="id" property="id" />
+		<result column="startMoney" property="startMoney" />
+		<result column="remark" property="remark" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+	</resultMap>
+
+	<select id="get" resultMap="resultRegisterBonus" parameterType="String">
+		select * from th_register_bonus
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultRegisterBonus">
+		select * from th_register_bonus order by createTime desc
+	</select>
+
+<!-- 获取充值比例(第一条) -->
+	<select id="getFirstRegisterBonus" resultMap="resultRegisterBonus">
+		select * from th_register_bonus order by createTime desc limit 0,1
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_register_bonus where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="RegisterBonus">
+		insert into th_register_bonus(id,createTime,ft,fu,startMoney,remark)
+		value(#{id},#{createTime},#{ft},#{fu},#{startMoney},#{remark})
+	</insert>
+
+	<select id="getCountByRegisterBonus" resultType="Integer" parameterType="RegisterBonus">
+		select count(*) From th_register_bonus
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="startMoney != null and startMoney != ''">
+				and startMoney=#{startMoney}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+	</select>
+	
+	<select id="getCountByObject" resultType="Integer" parameterType="RegisterBonus">
+		select count(*) From th_register_bonus
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="startMoney != null and startMoney != ''">
+				and startMoney=#{startMoney}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+	</select>
+
+	<select id="getRegisterBonusByRegisterBonus" resultMap="resultRegisterBonus" parameterType="RegisterBonus">
+		select * From th_register_bonus
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="startMoney != null and startMoney != ''">
+				and startMoney=#{startMoney}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+		order by CAST(startMoney as SIGNED)
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="RegisterBonus">
+		update th_register_bonus
+		<set>
+			<if test="startMoney != null and startMoney != ''">
+				startMoney=#{startMoney},
+			</if>
+			<if test="remark != null and remark != ''">
+				remark=#{remark},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+</mapper>

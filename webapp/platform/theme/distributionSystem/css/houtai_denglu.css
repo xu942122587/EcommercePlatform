@@ -1,0 +1,221 @@
+html,body{
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+}
+input:-webkit-autofill {
+ -webkit-box-shadow: 0 0 0px 1000px white inset;!important
+ -webkit-text-fill-color: #333;
+ border-style: solid;
+ border:0.01rem solid #9a9a9a;
+}
+.all_html{
+	width: 102%;
+	height: 100%;
+	background-color: #337AB7;
+	margin-right: -15px;
+	margin-left: -15px;
+}
+.zongti{
+	position: relative;
+	width: 80%;
+	height: 100%;
+	margin: auto;
+	min-width: 870px;
+}
+@media screen and (max-width:1500px) {
+	.denglu_leftpic{
+	height: 446px;
+	position: absolute;
+	top: 50%;
+	margin-top: -223px;
+}
+.denglu_right_input{
+	position: absolute;
+	top: 50%;
+	margin-top: -175px;
+	text-align: center;
+	right: 0;
+	height: 350px;
+	width: 375px;
+}
+.denglu_title{
+	font-size: 30px;
+	color: #FFFFFF;
+	line-height: 58px;
+}
+.allinput{
+	background-color: #FFFFFF;
+	height: 292px;
+	width: 375px;
+	border:1px solid #FFFFFF;
+}
+.input_type{
+	width: 80%;
+	margin: auto;
+	font-size:20px;
+	color: #337AB7;
+	text-align: left;
+	margin-top: 30px;
+}
+.denglu_username{
+	width: 80%;
+	margin: auto;
+	margin-top: 15px;
+}
+.denglu_username input{
+	width: 100%;
+	height: 46px;
+	padding: 0 5px;
+	box-sizing: border-box;
+	font-size: 16px;
+}
+.denglu_pwd{
+	width: 80%;
+	margin: auto;
+	margin-top: 15px;
+}
+.denglu_pwd input{
+	width: 100%;
+	height: 46px;
+	padding: 0 5px;
+	box-sizing: border-box;
+	font-size: 16px;
+}
+.denglu_submit{
+	width: 80%;
+	margin: auto;
+	margin-top: 15px;
+}
+.denglu_submit input{
+	width: 100%;
+	height: 46px;
+	font-size: 16px;
+	background-color: #337AB7;
+	border: none;
+	color: #FFFFFF;
+}
+.denglu_banquan{
+	position: absolute;
+	font-size: 18px;
+	color: #FFFFFF;
+	bottom: 30px;
+	left: 50%;
+	margin-left: -117px;
+}
+.miss_pwd{
+	font-size: 12px;
+	color: #6e6e6e;
+	width: 80%;
+	margin: 5px auto;
+	text-align: right;
+}
+.fail_title{
+	color: red;
+    height: 16px;
+    font-size: 12px;
+    text-align: left;
+    width: 80%;
+    margin: 5px auto -5px;
+}
+}
+@media screen and (min-width:1500px) {
+	.denglu_leftpic{
+	width: 600px;
+	height: 600px;
+	position: absolute;
+	top: 50%;
+	margin-top: -300px;
+	left: 5%;
+}
+.denglu_right_input{
+	position: absolute;
+	top: 50%;
+	margin-top: -253px;
+	text-align: center;
+	right: 6%;
+	height: 506px;
+	width: 450px;
+}
+.denglu_title{
+	font-size: 40px;
+	color: #FFFFFF;
+	line-height: 94px;
+}
+.allinput{
+	background-color: #FFFFFF;
+	height: 348px;
+	width: 450px;
+	border:1px solid #FFFFFF;
+}
+.input_type{
+	width: 80%;
+	margin: auto;
+	font-size:26px;
+	color: #337AB7;
+	text-align: left;
+	margin-top: 35px;
+}
+.denglu_username{
+	width: 80%;
+	margin: auto;
+	margin-top: 20px;
+}
+.denglu_username input{
+	width: 100%;
+	height: 50px;
+	padding: 0 5px;
+	box-sizing: border-box;
+	font-size: 18px;
+}
+.denglu_pwd{
+	width: 80%;
+	margin: auto;
+	margin-top: 20px;
+}
+.denglu_pwd input{
+	width: 100%;
+	height: 50px;
+	padding: 0 5px;
+	box-sizing: border-box;
+	font-size: 18px;
+}
+.denglu_submit{
+	width: 80%;
+	margin: auto;
+	margin-top: 20px;
+}
+.denglu_submit input{
+	width: 100%;
+	height: 50px;
+	font-size: 18px;
+	background-color: #337AB7;
+	border: none;
+	color: #FFFFFF;
+}
+.denglu_banquan{
+	position: absolute;
+	font-size: 22px;
+	color: #FFFFFF;
+	bottom: 30px;
+	left: 50%;
+	margin-left: -143px;
+}
+.miss_pwd{
+	font-size: 16px;
+	color: #6e6e6e;
+	width: 80%;
+	margin: 10px auto;
+	text-align: right;
+}
+.fail_title{
+	color: red;
+    height: 16px;
+    font-size: 14px;
+    text-align: left;
+    width: 80%;
+    margin: 5px auto 8px;
+}
+
+}

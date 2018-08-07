@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.cashierUserLoginAndLogout.dao.manual.CashierUserLoginAndLogoutDAO">
+	<resultMap type="CashierUserLoginAndLogout" id="resultCashierUserLoginAndLogout">
+		<id column="id" property="id" />
+		<result column="cashierCode" property="cashierCode" />
+		<result column="loginTime" property="loginTime" />
+		<result column="logoutTime" property="logoutTime" />
+		<result column="state" property="state" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="cashierUser" column="cashierUser_id" select="com.unitever.auth.user.dao.manual.UserDAO.get" />
+	</resultMap>
+
+	<select id="get" resultMap="resultCashierUserLoginAndLogout" parameterType="String">
+		select * from th_cashierUserLoginAndLogout
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultCashierUserLoginAndLogout">
+		select * from th_cashierUserLoginAndLogout order by createTime desc
+	</select>
+
+<!-- 通过收银ID获取本收银员未交班记录 -->
+	<select id="getNoLogoutMsgByCashierUserId" resultMap="resultCashierUserLoginAndLogout">
+		select * from th_cashierUserLoginAndLogout where cashierUser_id=#{cashierUser_id} and state='1' order by createTime desc limit 0,1
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_cashierUserLoginAndLogout where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="CashierUserLoginAndLogout">
+		insert into
+		th_cashierUserLoginAndLogout(id,state,cashierUser_id,cashierCode,createTime,ft,fu,logoutTime,loginTime)
+		value(#{id},#{state},#{cashierUser.id},#{cashierCode},#{createTime},#{ft},#{fu},#{logoutTime},#{loginTime})
+	</insert>
+
+	<select id="getCountByObject" resultType="Integer" parameterType="CashierUserLoginAndLogout">
+		select count(*) From th_cashierUserLoginAndLogout
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="cashierUser != null and cashierUser.id != null and cashierUser.id != ''">
+				and cashierUser_id=#{cashierUser.id}
+			</if>
+			<if test="cashierUserCode != null and cashierUserCode != ''">
+				and cashierUser_id in (select id from auth_user where username=#{cashierUserCode})
+			</if>
+			<if test="cashierCode != null and cashierCode != ''">
+				and cashierCode=#{cashierCode}
+			</if>
+			<if test="logoutTime != null and logoutTime != ''">
+				and logoutTime=#{logoutTime}
+			</if>
+			<if test="loginTime != null and loginTime != ''">
+				and loginTime=#{loginTime}
+			</if>
+			<if test="createTime != null and createTime != ''">
+				and createTime=#{createTime}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and logoutTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and logoutTime&lt;=#{endDate}
+			</if>
+		</where>
+	</select>
+
+	<select id="getCashierUserLoginAndLogoutByCashierUserLoginAndLogout" resultMap="resultCashierUserLoginAndLogout"
+			 parameterType="CashierUserLoginAndLogout">
+		select * From th_cashierUserLoginAndLogout
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="cashierUser != null and cashierUser.id != null and cashierUser.id != ''">
+				and cashierUser_id=#{cashierUser.id}
+			</if>
+			<if test="cashierUserCode != null and cashierUserCode != ''">
+				and cashierUser_id in (select id from auth_user where username=#{cashierUserCode})
+			</if>
+			<if test="cashierCode != null and cashierCode != ''">
+				and cashierCode=#{cashierCode}
+			</if>
+			<if test="logoutTime != null and logoutTime != ''">
+				and logoutTime=#{logoutTime}
+			</if>
+			<if test="loginTime != null and loginTime != ''">
+				and loginTime=#{loginTime}
+			</if>
+			<if test="createTime != null and createTime != ''">
+				and createTime=#{createTime}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and logoutTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and logoutTime&lt;=#{endDate}
+			</if>
+		</where>
+		order by createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="CashierUserLoginAndLogout">
+		update th_cashierUserLoginAndLogout
+		<set>
+			<if test="state != null and state != ''">
+				state=#{state},
+			</if>
+			<if test="cashierUser != null and cashierUser.id != null and cashierUser.id != ''">
+				cashierUser_id=#{cashierUser.id},
+			</if>
+			<if test="cashierCode != null and cashierCode != ''">
+				cashierCode=#{cashierCode},
+			</if>
+			<if test="logoutTime != null and logoutTime != ''">
+				logoutTime=#{logoutTime},
+			</if>
+			<if test="loginTime != null and loginTime != ''">
+				loginTime=#{loginTime},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+<!-- 结算 -->
+	<update id="doFinish" >
+		update th_cashierUserLoginAndLogout set state='3' WHERE id=#{id} and state='2'
+	</update>
+</mapper>

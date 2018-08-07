@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.banner.dao.manual.BannerDAO">
+	<resultMap type="Banner" id="resultBanner">
+		<id column="id" property="id" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<collection property="imgUrl" column="id" select="com.unitever.platform.component.attachment.dao.manual.AttachmentDAO.getUrlStringListByOwnerId"/>
+	</resultMap>
+
+	<select id="get" resultMap="resultBanner" parameterType="String">
+		select * from th_banner
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultBanner">
+		select * from th_banner order by createTime desc
+	</select>
+
+	<select id="first" resultMap="resultBanner">
+		select * from th_banner order by createTime desc limit 0,1
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_banner where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="Banner">
+		insert into th_banner(id,createTime,ft,fu)
+		value(#{id},#{createTime},#{ft},#{fu})
+	</insert>
+
+	<select id="getCountByObject" resultType="Integer" parameterType="Banner">
+		select count(*) From th_banner
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+	</select>
+
+	<select id="getBannerByBanner" resultMap="resultBanner" parameterType="Banner">
+		select * From th_banner
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+		order by createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="Banner">
+		update th_banner
+		<set>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+</mapper>

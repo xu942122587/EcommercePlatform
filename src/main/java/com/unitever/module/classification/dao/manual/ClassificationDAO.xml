@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.classification.dao.manual.ClassificationDAO">
+	<resultMap type="Classification" id="resultListClassification">  
+		<id column="id" property="id" />
+		<result column="name" property="name"/>  
+		<result column="description" property="description" />
+		<result column="seq" property="seq" />
+		<result column="level" property="level" />
+		<result column="isVisible" property="isVisible" />
+		<result column="state" property="state" />
+		<result column="otherAttrJson" property="otherAttrJson" />
+		<result column="remark" property="remark" />
+		<association column="parentId" property="parentClassification" select="com.unitever.module.classification.dao.manual.ClassificationDAO.get" />
+		<association column="id" property="isHaveGoods" select="com.unitever.module.goods.dao.manual.GoodsDAO.getCountByClassificationId" />
+		<collection property="childrenClassifications" ofType="Classification" column="{parentId = id}" select="com.unitever.module.classification.dao.manual.ClassificationDAO.getChildClassificationWithid">
+			<id column="id" property="id"/>
+			<result column="name" property="name"/>
+			<result column="description" property="description"/>
+			<result column="seq" property="seq"/>
+			<result column="level" property="level"/>
+			<result column="isVisible" property="isVisible"/>
+			<result column="state" property="state"/>
+			<result column="otherAttrJson" property="otherAttrJson" />
+			<result column="remark" property="remark" />
+		</collection>
+	</resultMap>
+
+	<insert id="save" parameterType="Classification">
+		insert into th_classification(id,name,description,seq,level,isVisible,state,parentId,otherAttrJson,remark)
+		value(#{id},#{name},#{description},#{seq},#{level},#{isVisible},#{state},#{parentClassification.id},#{otherAttrJson},#{remark})
+	</insert>
+
+	<!-- 获取一条数据 -->
+	<select id="get" resultMap="resultListClassification">
+		select * from th_classification where id=#{id}
+	</select>
+
+	<!-- 获取子分类集合 -->
+	<select id="getChildrenClassificationList" resultMap="resultListClassification">
+		select id,name,otherAttrJson from th_classification where parentId=#{id} and state='1' order by seq asc
+	</select>
+	
+	<!-- 获取有自定义属性的类 -->
+	<select id="getClassificationListForAttr" resultMap="resultListClassification">
+		select * from th_classification where (otherAttrJson is not null or otherAttrJson != '') and state='1' order by seq asc
+	</select>
+	
+	<!-- 获取有自定义属性的类 -->
+	<select id="getClassificationStringForAttr" resultMap="resultListClassification">
+		select * from th_classification where otherAttrJson != "" and state='1' order by seq asc
+	</select>
+
+	<select id="getAll" resultMap="resultListClassification">
+	 	select * from th_classification order by seq asc
+	</select>
+	
+	<!-- 根据门店Id获取主类 -->
+	<select id="getParentClassByStoreId" resultMap="resultListClassification">
+	 	select * from th_classification where `level` = '0' and 
+	 	(id in (select classification_id from th_goods where store_id=#{storeId} and `level` = '0') or 
+	 		id in (select parentId from th_classification where id in (select classification_id from th_goods where store_id=#{storeId}) and `level` = '1' ) or
+				id in (select parentId from th_classification where id in (select parentId from th_classification where  id in (select classification_id from th_goods where store_id=#{storeId}) and `level` = '2')))
+	</select>
+	
+	<!-- 根据门店Id获取子类 -->
+	<select id="getChildClassByStoreId" resultMap="resultListClassification">
+	 	select * from th_classification where level = '1' and 
+	 	(id in (select classification_id from th_goods where store_id=#{storeId}) or 
+	 		id in (select parentId from th_classification where id in (select classification_id from th_goods where store_id=#{storeId}) and level = '2' ))
+	</select>
+	
+	<!-- 根据门店Id获取3级 -->
+	<select id="getThreeClassByStoreId" resultMap="resultListClassification">
+	 	select * from th_classification where  id in (select classification_id from th_goods where store_id=#{storeId}) and  level = '2'
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete">
+		delete from th_classification where id=#{id}
+	</delete>
+
+	<!-- 更新一条数据 -->
+	<update id="update" parameterType="Classification">
+		update th_classification 
+		<set>
+			<if test="name != null and name != '' ">
+				name=#{name},
+			</if>
+			<if test="description != null and description != '' ">
+				description=#{description},
+			</if>
+			<if test="seq != null and seq != '' ">
+				seq=#{seq},
+			</if>
+			<if test="level != null and level != '' ">
+				level=#{level},
+			</if>
+			<if test="isVisible != null and isVisible != '' ">
+				isVisible=#{isVisible},
+			</if>
+			<if test="state != null and state != '' ">
+				state=#{state},
+			</if>
+			<if test="otherAttrJson != null and otherAttrJson != '' ">
+				otherAttrJson=#{otherAttrJson},
+			</if>
+			<if test="remark != null and remark != '' ">
+				remark=#{remark},
+			</if>
+			<if test="parentClassification != null and parentClassification.id != '' and parentClassification.id != null">
+				parentId=#{parentClassification.id},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update> 
+
+	<select id="getClassificationWithName" resultMap="resultListClassification">
+		select * from th_classification where name like CONCAT('%','${name}','%' ) and state='1'
+	</select>
+
+	<select id="getChildClassificationWithid" resultMap="resultListClassification" parameterType="java.util.HashMap"> 
+		select * from th_classification where parentId=#{parentId} and state='1' order by seq asc
+	</select>
+
+	<select id="getParentClassificationList" resultMap="resultListClassification">
+		select * from th_classification where level=0 and state='1' order by seq asc
+	</select>
+
+	<select id="getClassificationByClassification" resultMap="resultListClassification" parameterType="Classification">
+		select * From th_classification
+		<where>
+			1=1
+			<if test="id != null">
+				and id =#{id}
+			</if>
+			<if test="name != null">
+				and name like CONCAT('%','${name}','%' )
+			</if>
+			<if test="description != null and description != '' ">
+				and description like CONCAT('%','${description}','%' )
+			</if>
+			<if test="seq != null and seq != '' ">
+				and seq=#{seq}
+			</if>
+			<if test="level != null and level != '' ">
+				and level=#{level}
+			</if>
+			<if test="isVisible != null and isVisible != '' ">
+				and isVisible=#{isVisible}
+			</if>
+			<if test="state != null and state != '' ">
+				and state=#{state}
+			</if>
+			<if test="otherAttrJson != null and otherAttrJson != '' ">
+				and otherAttrJson=#{otherAttrJson}
+			</if>
+			<if test="remark != null and remark != '' ">
+				and remark=#{remark}
+			</if>
+			<if test="parentClassification != null and parentClassification.id != '' and parentClassification.id != null">
+				and parentId=#{parentClassification.id}
+			</if>
+		</where> 
+		order by seq asc
+	</select>
+
+</mapper>

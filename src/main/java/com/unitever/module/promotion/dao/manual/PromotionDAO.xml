@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.promotion.dao.manual.PromotionDAO">
+	<resultMap type="Promotion" id="resultPromotion">
+		<id column="id" property="id" />
+		<result column="type" property="type" />
+		<result column="ownerId" property="ownerId" />
+		<result column="sorting" property="sorting" />
+		<result column="otherPro1" property="otherPro1" />
+		<result column="otherPro2" property="otherPro2" />
+		<result column="otherPro3" property="otherPro3" />
+		<result column="otherPro4" property="otherPro4" />
+		<result column="otherPro5" property="otherPro5" />
+		<result column="otherPro6" property="otherPro6" />
+		<result column="otherPro7" property="otherPro7" />
+		<result column="otherPro8" property="otherPro8" />
+		<result column="otherPro9" property="otherPro9" />
+		<result column="otherPro10" property="otherPro10" />
+		<result column="otherPro11" property="otherPro11" />
+		<result column="otherPro12" property="otherPro12" />
+		<result column="otherPro13" property="otherPro13" />
+		<result column="otherPro14" property="otherPro14" />
+		<result column="otherPro15" property="otherPro15" />
+		<result column="isDelete" property="isDelete" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="promotionGroup" column="promotionGroup_id" select="com.unitever.module.promotionGroup.dao.manual.PromotionGroupDAO.get" />
+		<collection property="promotionLadderList" column="id" select="com.unitever.module.promotionLadder.dao.manual.PromotionLadderDAO.getAllByPromotionId" />
+	</resultMap>
+
+	<select id="get" resultMap="resultPromotion" parameterType="String">
+		select * from th_promotion
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultPromotion">
+		select * from th_promotion where isDelete='1' order by createTime desc
+	</select>
+
+<!-- 依据活动组ID获取促销活动list -->
+	<select id="getAllByPromotionGroupId" resultMap="resultPromotion">
+		select * from th_promotion where promotionGroup_id=#{promotionGroupId} and isDelete='1' order by CAST(sorting AS SIGNED) asc
+	</select>
+
+	<!-- 删除一条数据 -->
+	<update id="delete" parameterType="String">
+		update th_promotion set isDelete='2' where id=#{id}
+	</update>
+
+	<insert id="save" parameterType="Promotion">
+		insert into
+		th_promotion(id,promotionGroup_id,type,ownerId,sorting,
+				otherPro1,otherPro2,otherPro3,otherPro4,otherPro5,otherPro6,otherPro7,
+				otherPro8,otherPro9,otherPro10,otherPro11,otherPro12,otherPro13,
+				otherPro14,otherPro15,createTime,ft,fu,isDelete)
+		value(#{id},#{promotionGroup.id},#{type},#{ownerId},#{sorting},
+				#{otherPro1},#{otherPro2},#{otherPro3},#{otherPro4},#{otherPro5},#{otherPro6},#{otherPro7},
+				#{otherPro8},#{otherPro9},#{otherPro10},#{otherPro11},#{otherPro12},#{otherPro13},
+				#{otherPro14},#{otherPro15},#{createTime},#{ft},#{fu},#{isDelete})
+	</insert>
+
+	<select id="getCountByPromotion" resultType="Integer" parameterType="Promotion">
+		select count(*) From th_promotion
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="promotionGroup != null and promotionGroup.id != null and promotionGroup.id != ''">
+				and promotionGroup_id=#{promotionGroup.id}
+			</if>
+			<if test="type != null and type != ''">
+				and type=#{type}
+			</if>
+			<if test="ownerId != null and ownerId != ''">
+				and ownerId=#{ownerId}
+			</if>
+			<if test="sorting != null and sorting != ''">
+				and sorting=#{sorting}
+			</if>
+			<if test="otherPro1 != null and otherPro1 != ''">
+				and otherPro1=#{otherPro1}
+			</if>
+			<if test="otherPro2 != null and otherPro2 != ''">
+				and otherPro2=#{otherPro2}
+			</if>
+			<if test="otherPro3 != null and otherPro3 != ''">
+				and otherPro3=#{otherPro3}
+			</if>
+			<if test="otherPro4 != null and otherPro4 != ''">
+				and otherPro4=#{otherPro4}
+			</if>
+			<if test="otherPro5 != null and otherPro5 != ''">
+				and otherPro5=#{otherPro5}
+			</if>
+			<if test="otherPro6 != null and otherPro6 != ''">
+				and otherPro6=#{otherPro6}
+			</if>
+			<if test="otherPro7 != null and otherPro7 != ''">
+				and otherPro7=#{otherPro7}
+			</if>
+			<if test="otherPro8 != null and otherPro8 != ''">
+				and otherPro8=#{otherPro8}
+			</if>
+			<if test="otherPro9 != null and otherPro9 != ''">
+				and otherPro9=#{otherPro9}
+			</if>
+			<if test="otherPro10 != null and otherPro10 != ''">
+				and otherPro10=#{otherPro10}
+			</if>
+			<if test="otherPro11 != null and otherPro11 != ''">
+				and otherPro11=#{otherPro11}
+			</if>
+			<if test="otherPro12 != null and otherPro12 != ''">
+				and otherPro12=#{otherPro12}
+			</if>
+			<if test="otherPro13 != null and otherPro13 != ''">
+				and otherPro13=#{otherPro13}
+			</if>
+			<if test="otherPro14 != null and otherPro14 != ''">
+				and otherPro14=#{otherPro14}
+			</if>
+			<if test="otherPro15 != null and otherPro15 != ''">
+				and otherPro15=#{otherPro15}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1'
+		</where>
+	</select>
+
+	<select id="getPromotionByPromotion" resultMap="resultPromotion" parameterType="Promotion">
+		select * From th_promotion
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="promotionGroup != null and promotionGroup.id != null and promotionGroup.id != ''">
+				and promotionGroup_id=#{promotionGroup.id}
+			</if>
+			<if test="type != null and type != ''">
+				and type=#{type}
+			</if>
+			<if test="ownerId != null and ownerId != ''">
+				and ownerId=#{ownerId}
+			</if>
+			<if test="sorting != null and sorting != ''">
+				and sorting=#{sorting}
+			</if>
+			<if test="otherPro1 != null and otherPro1 != ''">
+				and otherPro1=#{otherPro1}
+			</if>
+			<if test="otherPro2 != null and otherPro2 != ''">
+				and otherPro2=#{otherPro2}
+			</if>
+			<if test="otherPro3 != null and otherPro3 != ''">
+				and otherPro3=#{otherPro3}
+			</if>
+			<if test="otherPro4 != null and otherPro4 != ''">
+				and otherPro4=#{otherPro4}
+			</if>
+			<if test="otherPro5 != null and otherPro5 != ''">
+				and otherPro5=#{otherPro5}
+			</if>
+			<if test="otherPro6 != null and otherPro6 != ''">
+				and otherPro6=#{otherPro6}
+			</if>
+			<if test="otherPro7 != null and otherPro7 != ''">
+				and otherPro7=#{otherPro7}
+			</if>
+			<if test="otherPro8 != null and otherPro8 != ''">
+				and otherPro8=#{otherPro8}
+			</if>
+			<if test="otherPro9 != null and otherPro9 != ''">
+				and otherPro9=#{otherPro9}
+			</if>
+			<if test="otherPro10 != null and otherPro10 != ''">
+				and otherPro10=#{otherPro10}
+			</if>
+			<if test="otherPro11 != null and otherPro11 != ''">
+				and otherPro11=#{otherPro11}
+			</if>
+			<if test="otherPro12 != null and otherPro12 != ''">
+				and otherPro12=#{otherPro12}
+			</if>
+			<if test="otherPro13 != null and otherPro13 != ''">
+				and otherPro13=#{otherPro13}
+			</if>
+			<if test="otherPro14 != null and otherPro14 != ''">
+				and otherPro14=#{otherPro14}
+			</if>
+			<if test="otherPro15 != null and otherPro15 != ''">
+				and otherPro15=#{otherPro15}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1'
+		</where>
+		order by createTime desc
+	</select>
+
+	<update id="update" parameterType="Promotion">
+		update th_promotion
+		<set>
+			<if test="promotionGroup != null and promotionGroup.id != null and promotionGroup.id != ''">
+				promotionGroup_id=#{promotionGroup.id},
+			</if>
+			<if test="type != null and type != ''">
+				type=#{type},
+			</if>
+			<if test="ownerId != null and ownerId != ''">
+				ownerId=#{ownerId},
+			</if>
+			<if test="sorting != null and sorting != ''">
+			sorting=#{sorting},
+			</if>
+			<if test="otherPro1 != null and otherPro1 != ''">
+			otherPro1=#{otherPro1},
+			</if>
+			<if test="otherPro2 != null and otherPro2 != ''">
+				otherPro2=#{otherPro2},
+			</if>
+			<if test="otherPro3 != null and otherPro3 != ''">
+				otherPro3=#{otherPro3},
+			</if>
+			<if test="otherPro4 != null and otherPro4 != ''">
+				otherPro4=#{otherPro4},
+			</if>
+			<if test="otherPro5 != null and otherPro5 != ''">
+				otherPro5=#{otherPro5},
+			</if>
+			<if test="otherPro6 != null and otherPro6 != ''">
+				otherPro6=#{otherPro6},
+			</if>
+			<if test="otherPro7 != null and otherPro7 != ''">
+				otherPro7=#{otherPro7},
+			</if>
+			<if test="otherPro8 != null and otherPro8 != ''">
+				otherPro8=#{otherPro8},
+			</if>
+			<if test="otherPro9 != null and otherPro9 != ''">
+				otherPro9=#{otherPro9},
+			</if>
+			<if test="otherPro10 != null and otherPro10 != ''">
+				otherPro10=#{otherPro10},
+			</if>
+			<if test="otherPro11 != null and otherPro11 != ''">
+				otherPro11=#{otherPro11},
+			</if>
+			<if test="otherPro12 != null and otherPro12 != ''">
+				otherPro12=#{otherPro12},
+			</if>
+			<if test="otherPro13 != null and otherPro13 != ''">
+				otherPro13=#{otherPro13},
+			</if>
+			<if test="otherPro14 != null and otherPro14 != ''">
+				otherPro14=#{otherPro14},
+			</if>
+			<if test="otherPro15 != null and otherPro15 != ''">
+				otherPro15=#{otherPro15},
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				isDelete=#{isDelete},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+</mapper>

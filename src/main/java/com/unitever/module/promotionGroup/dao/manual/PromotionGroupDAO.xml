@@ -1,0 +1,455 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.promotionGroup.dao.manual.PromotionGroupDAO">
+	<resultMap type="PromotionGroup" id="resultPromotionGroup">
+		<id column="id" property="id" />
+		<result column="proStartDate" property="proStartDate" />
+		<result column="proEndDate" property="proEndDate" />
+		<result column="scope" property="scope" />
+		<result column="isOline" property="isOline" />
+		<result column="payType" property="payType" />
+		<result column="isDelete" property="isDelete" />
+		<result column="ownerId" property="ownerId" />
+		<result column="remark" property="remark" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<collection property="promotionList" column="id" select="com.unitever.module.promotion.dao.manual.PromotionDAO.getAllByPromotionGroupId" />
+	</resultMap>
+
+	<select id="get" resultMap="resultPromotionGroup" parameterType="String">
+		select * from th_promotion_group
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultPromotionGroup">
+		select * from th_promotion_group where isDelete='1' order by createTime desc
+	</select>
+
+<!-- 依据门店ID获取活动分组信息 -->
+	<select id="getAllPromotionGroupByStoreId" resultMap="resultPromotionGroup">
+		select DISTINCT group_.*
+		from th_promotion_group group_, (SELECT id from th_goods where store_id=#{storeId} and (goods_id is null or goods_id='')) goods_id
+		where group_.proStartDate&lt;=NOW() and group_.proEndDate&gt;=NOW() and group_.isDelete='1'
+			and (
+				group_.ownerId=#{storeId}
+				OR
+				group_.ownerId like CONCAT('%',goods_id.id,'%')
+				or
+				group_.ownerId is null
+				OR
+				group_.ownerId=''
+			)
+			and group_.scope!='4'
+			<if test="isOnline != null and isOnline != ''">
+				and (isOline=#{isOnline} or isOline='3')
+			</if>
+			<if test="payType != null and payType != ''">
+				and (payType=#{payType} or payType='6')
+			</if>
+		order by scope asc
+	</select>
+
+<!-- 线下：依据门店ID获取活动分组信息中支付方式列表 -->
+	<select id="getProGroupPayTypesByStoreId" resultType="String">
+		select GROUP_CONCAT(group_.payType)
+		from th_promotion_group group_, (SELECT id from th_goods where store_id=#{storeId} and (goods_id is null or goods_id='')) goods_id
+		where group_.proStartDate&lt;=NOW() and group_.proEndDate&gt;=NOW() and group_.isDelete='1'
+			and (
+				group_.ownerId=#{storeId}
+				OR
+				group_.ownerId like CONCAT('%',goods_id.id,'%')
+				or
+				group_.ownerId is null
+				OR
+				group_.ownerId=''
+			)
+			and group_.scope!='4'
+			and group_.isOline!='1'
+			and group_.payType!='6'
+		order by scope asc
+	</select>
+
+<!-- 依据商家店门店ID获取活动分组信息 -->
+	<select id="getAllPromotionGroupByNoTianheStoreId" resultMap="resultPromotionGroup">
+		select DISTINCT group_.*
+		from th_promotion_group group_
+		where group_.proStartDate&lt;=NOW() and group_.proEndDate&gt;=NOW() and group_.isDelete='1'
+			and (
+				group_.ownerId=#{storeId}
+				or
+				group_.ownerId is null
+				OR
+				group_.ownerId=''
+			)
+			and group_.scope!='4'
+			<if test="isOnline != null and isOnline != ''">
+				and (isOline=#{isOnline} or isOline='3')
+			</if>
+			<if test="payType != null and payType != ''">
+				and (payType=#{payType} or payType='6')
+			</if>
+		order by scope asc
+	</select>
+
+<!-- 线下：依据商家店门店ID获取活动分组信息中支付方式列表 -->
+	<select id="getProGroupPayTypesByNoTianheStoreId" resultType="String">
+		select GROUP_CONCAT(group_.payType)
+		from th_promotion_group group_
+		where group_.proStartDate&lt;=NOW() and group_.proEndDate&gt;=NOW() and group_.isDelete='1'
+			and (
+				group_.ownerId=#{storeId}
+				or
+				group_.ownerId is null
+				OR
+				group_.ownerId=''
+			)
+			and group_.scope!='4'
+			and group_.isOline!='1'
+			and group_.payType!='6'
+		order by scope asc
+	</select>
+
+<!-- 获取全场叠加活动 -->
+	<select id="getNoScopeGroup" resultMap="resultPromotionGroup">
+		select DISTINCT group_.*
+		from th_promotion_group group_
+		where group_.proStartDate&lt;=NOW() and group_.proEndDate&gt;=NOW() and scope='4' and isDelete='1'
+	</select>
+
+<!-- 检查活动组是否可保存 -->
+	<select id="checkGroupIsNeedSave" resultType="Integer">
+		SELECT COUNT(*)
+		FROM th_promotion_group
+		where scope=#{scope}
+			and isOline=#{isOline}
+			and payType=#{payType}
+			and isDelete='1'
+			and 
+				<if test="ownerId == null or ownerId == ''">
+					(ownerId is null  or ownerId='')
+				</if>
+				<if test="ownerId != null and ownerId != ''">
+					<foreach collection="ownerIdArray" index="index" item="item" open="(" separator="or" close=")">
+						ownerId like CONCAT('%','${item}','%')
+					</foreach>
+				</if>
+			AND (
+				(#{proStartDateString}&gt;proStartDate and #{proStartDateString}&lt;proEndDate) 
+				or 
+				(#{proEndDateString}&gt;proStartDate and #{proEndDateString}&lt;proEndDate)
+				OR
+				(#{proStartDateString}&lt;proStartDate and #{proEndDateString}&gt;proEndDate)
+			)
+			<if test="id != null and id != ''">
+				and id!=#{id}
+				and 0>=(
+					select count(*) from th_promotion_group
+					where id=#{id}
+						and scope=#{scope}
+						and isOline=#{isOline}
+						and payType=#{payType}
+						and isDelete='1'
+						and proStartDate=#{proStartDateString}
+						and proEndDate=#{proEndDateString}
+						and 
+							<if test="ownerId == null or ownerId == ''">
+								(ownerId is null  or ownerId='')
+							</if>
+							<if test="ownerId != null and ownerId != ''">
+								<foreach collection="ownerIdArray" index="index" item="item" open="(" separator="or" close=")">
+									ownerId like CONCAT('%','${item}','%')
+								</foreach>
+							</if>
+				)
+			</if>
+	</select>
+
+<!-- 获取线上线下互斥的记录条数 -->
+	<select id="getIsOnlineCount" resultType="Integer">
+		SELECT COUNT(*)
+		FROM th_promotion_group
+		where scope=#{scope}
+			<if test="'3'.toString() != isOline">
+				and isOline='3'
+			</if>
+			<if test="'3'.toString() == isOline">
+				and isOline!='3'
+			</if>
+			and payType=#{payType}
+			and isDelete='1'
+			and 
+				<if test="ownerId == null or ownerId == ''">
+					(ownerId is null  or ownerId='')
+				</if>
+				<if test="ownerId != null and ownerId != ''">
+					<foreach collection="ownerIdArray" index="index" item="item" open="(" separator="or" close=")">
+						ownerId like CONCAT('%','${item}','%')
+					</foreach>
+				</if>
+			AND (
+				(#{proStartDateString}&gt;proStartDate and #{proStartDateString}&lt;proEndDate) 
+				or 
+				(#{proEndDateString}&gt;proStartDate and #{proEndDateString}&lt;proEndDate)
+				OR
+				(#{proStartDateString}&lt;proStartDate and #{proEndDateString}&gt;proEndDate)
+			)
+			<if test="id != null and id != ''">
+				and id!=#{id}
+				and 0>=(
+					select count(*) from th_promotion_group
+					where id=#{id}
+						and scope=#{scope}
+						and isOline=#{isOline}
+						and payType=#{payType}
+						and isDelete='1'
+						and proStartDate=#{proStartDateString}
+						and proEndDate=#{proEndDateString}
+						and 
+							<if test="ownerId == null or ownerId == ''">
+								(ownerId is null  or ownerId='')
+							</if>
+							<if test="ownerId != null and ownerId != ''">
+								<foreach collection="ownerIdArray" index="index" item="item" open="(" separator="or" close=")">
+									ownerId like CONCAT('%','${item}','%')
+								</foreach>
+							</if>
+				)
+			</if>
+	</select>
+
+<!-- 获取支付方式互斥统计数 -->
+	<select id="getPayTypeCount" resultType="Integer">
+		SELECT COUNT(*)
+		FROM th_promotion_group
+		where scope=#{scope}
+			and isOline=#{isOline}
+			<if test="'6'.toString() != payType">
+				and payType='6'
+			</if>
+			<if test="'6'.toString() == payType">
+				and payType!='6'
+			</if>
+			and isDelete='1'
+			and 
+				<if test="ownerId == null or ownerId == ''">
+					(ownerId is null  or ownerId='')
+				</if>
+				<if test="ownerId != null and ownerId != ''">
+					<foreach collection="ownerIdArray" index="index" item="item" open="(" separator="or" close=")">
+						ownerId like CONCAT('%','${item}','%')
+					</foreach>
+				</if>
+			AND (
+				(#{proStartDateString}&gt;proStartDate and #{proStartDateString}&lt;proEndDate) 
+				or 
+				(#{proEndDateString}&gt;proStartDate and #{proEndDateString}&lt;proEndDate)
+				OR
+				(#{proStartDateString}&lt;proStartDate and #{proEndDateString}&gt;proEndDate)
+			)
+			<if test="id != null and id != ''">
+				and id!=#{id}
+				and 0>=(
+					select count(*) from th_promotion_group
+					where id=#{id}
+						and scope=#{scope}
+						and isOline=#{isOline}
+						and payType=#{payType}
+						and isDelete='1'
+						and proStartDate=#{proStartDateString}
+						and proEndDate=#{proEndDateString}
+						and 
+							<if test="ownerId == null or ownerId == ''">
+								(ownerId is null  or ownerId='')
+							</if>
+							<if test="ownerId != null and ownerId != ''">
+								<foreach collection="ownerIdArray" index="index" item="item" open="(" separator="or" close=")">
+									ownerId like CONCAT('%','${item}','%')
+								</foreach>
+							</if>
+				)
+			</if>
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_promotion_group where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="PromotionGroup">
+		insert into
+		th_promotion_group(id,proStartDate,proEndDate,scope,isOline,payType,ownerId,
+				isDelete,remark,createTime,ft,fu)
+		value(#{id},#{proStartDateString},#{proEndDateString},#{scope},#{isOline},#{payType},#{ownerId},
+				#{isDelete},#{remark},#{createTime},#{ft},#{fu})
+	</insert>
+
+	<select id="getCountByPromotionGroup" resultType="Integer" parameterType="PromotionGroup">
+		select count(*) From th_promotion_group
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="proStartDate != null and proStartDate != ''">
+				and proStartDate=#{proStartDate}
+			</if>
+			<if test="proEndDate != null and proEndDate != ''">
+				and proEndDate=#{proEndDate}
+			</if>
+			<if test="scope != null and scope != ''">
+				and scope=#{scope}
+			</if>
+			<if test="isOline != null and isOline != ''">
+				and isOline=#{isOline}
+			</if>
+			<if test="payType != null and payType != ''">
+				and payType=#{payType}
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			<if test="ownerId != null and ownerId != ''">
+				and ownerId=#{ownerId}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1'
+		</where>
+	</select>
+	
+	<select id="getCountByObject" resultType="Integer" parameterType="PromotionGroup">
+		select count(*) From th_promotion_group
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="proStartDate != null and proStartDate != ''">
+				and proStartDate=#{proStartDate}
+			</if>
+			<if test="proEndDate != null and proEndDate != ''">
+				and proEndDate=#{proEndDate}
+			</if>
+			<if test="scope != null and scope != ''">
+				and scope=#{scope}
+			</if>
+			<if test="isOline != null and isOline != ''">
+				and isOline=#{isOline}
+			</if>
+			<if test="payType != null and payType != ''">
+				and payType=#{payType}
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			<if test="ownerId != null and ownerId != ''">
+				and ownerId=#{ownerId}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1'
+		</where>
+	</select>
+
+	<select id="getPromotionGroupByPromotionGroup" resultMap="resultPromotionGroup" parameterType="PromotionGroup">
+		select * From th_promotion_group
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="proStartDate != null and proStartDate != ''">
+				and proStartDate=#{proStartDate}
+			</if>
+			<if test="proEndDate != null and proEndDate != ''">
+				and proEndDate=#{proEndDate}
+			</if>
+			<if test="scope != null and scope != ''">
+				and scope=#{scope}
+			</if>
+			<if test="isOline != null and isOline != ''">
+				and isOline=#{isOline}
+			</if>
+			<if test="payType != null and payType != ''">
+				and payType=#{payType}
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="ownerId != null and ownerId != ''">
+				and ownerId=#{ownerId}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1'
+		</where>
+		order by createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="PromotionGroup">
+		update th_promotion_group
+		<set>
+			<if test="proStartDateString != null and proStartDateString != ''">
+				proStartDate=#{proStartDateString},
+			</if>
+			<if test="proEndDateString != null and proEndDateString != ''">
+				proEndDate=#{proEndDateString},
+			</if>
+			<if test="scope != null and scope != ''">
+				scope=#{scope},
+			</if>
+			<if test="isOline != null and isOline != ''">
+				isOline=#{isOline},
+			</if>
+			<if test="payType != null and payType != ''">
+				payType=#{payType},
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				isDelete=#{isDelete},
+			</if>
+			<if test="remark != null and remark != ''">
+				remark=#{remark},
+			</if>
+			<if test="ownerId != null and ownerId != ''">
+				ownerId=#{ownerId},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+</mapper>

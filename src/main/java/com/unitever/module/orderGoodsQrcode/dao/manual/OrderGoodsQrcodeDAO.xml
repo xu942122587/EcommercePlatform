@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.orderGoodsQrcode.dao.manual.OrderGoodsQrcodeDAO">
+	<resultMap type="OrderGoodsQrcode" id="resultOrderGoodsQrcode">
+		<id column="id" property="id" />
+		<result column="isJoin" property="isJoin" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="orderGoods" column="order_goods_id" select="com.unitever.module.orderGoods.dao.manual.OrderGoodsDAO.get" />
+		<association property="qrcode" column="qrcode_id" select="com.unitever.module.qrcode.dao.manual.QrcodeDAO.get" />
+	</resultMap>
+
+	<select id="get" resultMap="resultOrderGoodsQrcode" parameterType="String">
+		select * from th_order_goods_qrcode
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultOrderGoodsQrcode">
+		select * from th_order_goods_qrcode
+	</select>
+
+<!-- 依据orderGoodsId获取对应的二维码关联关系记录 -->
+	<select id="getAllByOrderGoodsId" resultMap="resultOrderGoodsQrcode">
+		select * from th_order_goods_qrcode where order_goods_id=#{id}
+	</select>
+	
+<!-- 依据qrcodeId获取对应的二维码关联关系记录 -->
+	<select id="getAllByQrcodeId" resultMap="resultOrderGoodsQrcode">
+		select * from th_order_goods_qrcode where qrcode_id=#{qrcodeId} order by createTime desc LIMIT 0,1
+	</select>
+	
+<!-- 依据订单ID获取该订单下绑定的Qrcode总数（退货和售出统计数） -->
+	<select id="getCountQrcodeByOrderId" resultType="String">
+		select count(*) from th_order_goods_qrcode where order_goods_id in (
+			select id from th_order_goods where order_id in (
+				SELECT * 
+				from (
+					(select DISTINCT id from th_order where id=#{order_id})
+					UNION
+					(SELECT DISTINCT id from th_order where order_id=#{order_id})
+				) AS CLASS_ID_TABLE
+			)
+		)
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_order_goods_qrcode where id=#{id}
+	</delete>
+
+	<!-- 订单删除发货二维码 -->
+	<delete id="orderDeleteQrcode">
+		delete from th_order_goods_qrcode
+		where qrcode_id=#{qRCodeID}
+			and order_goods_id in (
+				select id from th_order_goods where order_id in (
+					SELECT * 
+					from (
+						(select DISTINCT id from th_order where id=#{orderId})
+						UNION
+						(SELECT DISTINCT id from th_order where order_id=#{orderId})
+					) AS CLASS_ID_TABLE
+				)
+			)
+	</delete>
+
+	<insert id="save" parameterType="OrderGoodsQrcode">
+		insert into
+		th_order_goods_qrcode(id,order_goods_id,qrcode_id,isJoin,createTime,ft,fu)
+		value(#{id},#{orderGoods.id},#{qrcode.id},#{isJoin},#{createTime},#{ft},#{fu})
+	</insert>
+
+<!-- 订单保存发货qrcode -->
+	<insert id="saveOGQ" parameterType="OrderGoodsQrcode">
+		insert into
+		th_order_goods_qrcode(id,order_goods_id,qrcode_id,isJoin,createTime,ft,fu)
+		select #{id},#{orderGoods.id},#{qrcode.id},#{isJoin},#{createTime},#{ft},#{fu}
+		from DUAL
+		where (
+				select count(*) 
+				from th_order_goods_qrcode
+				where order_goods_id=#{orderGoods.id}
+			)&lt;(
+				select count
+				from th_order_goods
+				where id=#{orderGoods.id}
+			)
+			and 0&gt;=(
+				select count(*)
+				FROM th_order_goods_qrcode
+				where qrcode_id=#{qrcode.id}
+					and order_goods_id=#{orderGoods.id}
+			)
+	</insert>
+
+	<select id="getOrderGoodsQrcodeByOrderGoodsQrcode" resultMap="resultOrderGoodsQrcode" parameterType="OrderGoodsQrcode">
+		select * From th_order_goods_qrcode
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="orderGoods != null and orderGoods.id != null and orderGoods.id != ''">
+				and order_goods_id=#{orderGoods.id}
+			</if>
+			<if test="qrcode != null and qrcode.id != null and qrcode.id != ''">
+				and qrcode_id=#{qrcode.id}
+			</if>
+			<if test="isJoin != null and isJoin != ''">
+				and isJoin=#{isJoin}
+			</if>
+		</where>
+		order by createTime desc
+	</select>
+
+	<update id="update" parameterType="OrderGoodsQrcode">
+		update th_order_goods_qrcode
+		<set>
+			<if test="orderGoods != null and orderGoods.id != null and orderGoods.id != ''">
+				order_goods_id=#{orderGoods.id},
+			</if>
+			<if test="qrcode != null and qrcode.id != null and qrcode.id != ''">
+				qrcode_id=#{qrcode.id},
+			</if>
+			<if test="isJoin != null and isJoin != ''">
+				isJoin=#{isJoin},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+</mapper>

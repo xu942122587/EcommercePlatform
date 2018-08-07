@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.specification.dao.manual.SpecificationDAO">
+	<resultMap type="Specification" id="resultSpecification">
+		<id column="id" property="id" />
+		<result column="name" property="name" />
+		<result column="isDelete" property="isDelete" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+	</resultMap>
+
+	<select id="get" resultMap="resultSpecification" parameterType="String">
+		select * from th_specification
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultSpecification">
+		select * from th_specification where isDelete='1' order by createTime desc
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_specification where  and id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="Specification">
+		insert into
+		th_specification(id,name,isDelete,createTime,ft,fu)
+		value(#{id},#{name},#{isDelete},#{createTime},#{ft},#{fu})
+	</insert>
+
+	<select id="getCountBySpecification" resultType="Integer" parameterType="Specification">
+		select count(*) From th_specification
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="name != null and name != ''">
+				and name like CONCAT('%','${name}','%')
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+				and isDelete = '1'
+		</where>
+	</select>
+	
+	<select id="getCountByObject" resultType="Integer" parameterType="Specification">
+		select count(*) From th_specification
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="name != null and name != ''">
+				and name like CONCAT('%','${name}','%')
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+				and isDelete = '1'
+		</where>
+	</select>
+
+	<select id="getSpecificationBySpecification" resultMap="resultSpecification" parameterType="Specification">
+		select * From th_specification
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="name != null and name != ''">
+				and name like CONCAT('%','${name}','%')
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+				and isDelete='1'
+		</where>
+		order by createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="Specification">
+		update th_specification
+		<set>
+			<if test="name != null and name != ''">
+				name=#{name},
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				isDelete=#{isDelete},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+			
+		</set>
+		WHERE id=#{id} 
+	</update>
+
+</mapper>

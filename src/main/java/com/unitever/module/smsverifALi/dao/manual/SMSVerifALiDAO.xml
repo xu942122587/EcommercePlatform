@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.smsverifALi.dao.manual.SMSVerifALiDAO">
+
+	<resultMap type="SMSVerifALi" id="resultListSMSVerifALi">
+		<id column="id" property="id" />
+		<result column="phone" property="phone" />
+		<result column="code" property="code" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+	</resultMap>
+
+	<insert id="save" parameterType="SMSVerifALi">
+		insert into
+		th_smsverif(id,phone,code,createTime,ft,fu)
+		value(#{id},#{phone},#{code},#{createTime},#{ft},#{fu})
+	</insert>
+
+	<!-- 获取一条数据 -->
+	<select id="get" resultMap="resultListSMSVerifALi">
+		select * from th_smsverif where
+		id=#{id}
+	</select>
+
+	<!-- 根据手机号码获取验证码 -->
+	<select id="getSMSByPhone" resultMap="resultListSMSVerifALi">
+		select * from th_smsverif
+		where phone=#{phone}
+	</select>
+
+	<!-- 获取一条数据 -->
+	<select id="getAll" resultMap="resultListSMSVerifALi">
+		select * from th_smsverif
+	</select>
+	<!-- 删除一条数据 -->
+	<delete id="delete">
+		delete from th_smsverif where id=#{id}
+	</delete>
+
+	<!-- 删除一条数据 -->
+	<delete id="deleteByPhone">
+		delete from th_smsverif where phone=#{phone}
+	</delete>
+
+	<select id="getSMSVerifListWithSMSVerif" resultMap="resultListSMSVerifALi" parameterType="SMSVerifALi">
+		select * From th_smsverif
+		<where>
+			1=1
+			<if test="id != null">
+				and id =#{id}
+			</if>
+			<if test="phone != null and phone != '' ">
+				and phone=#{phone}
+			</if>
+			<if test="createTime != null and createTime != '' ">
+				and createTime=#{createTime}
+			</if>
+			<if test="code != null and code != '' ">
+				and code=#{code}
+			</if>
+		</where>
+	</select>
+
+	<update id="update" parameterType="SMSVerifALi">
+		update th_smsverif
+		<set>
+			<if test="phone != null and phone != '' ">
+				phone=#{phone},
+			</if>
+			<if test="createTime != null and createTime != '' ">
+				createTime=#{createTime},
+			</if>
+			<if test="code != null and code != '' ">
+				code=#{code},
+			</if>
+			<if test="'lt' != null and 'lt' != '' ">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != '' ">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+</mapper>

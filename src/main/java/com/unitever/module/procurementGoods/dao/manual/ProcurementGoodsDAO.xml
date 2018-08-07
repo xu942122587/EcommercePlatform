@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.procurementGoods.dao.manual.ProcurementGoodsDAO">
+	<resultMap type="ProcurementGoods" id="resultProcurementGoods">
+		<id column="id" property="id" />
+		<result column="count" property="count" />
+		<result column="buyCount" property="buyCount" />
+		<result column="buyPrice" property="buyPrice" />
+		<result column="isPrint" property="isPrint" />
+		<result column="isRecord" property="isRecord" />
+		<result column="buyAgio" property="buyAgio" />
+		<result column="salseMoney" property="salseMoney" />
+		<result column="salseAgio" property="salseAgio" />
+		<result column="goodsPrice" property="goodsPrice" />
+		<result column="printCount" property="printCount" />
+		<result column="printUserID_string" property="printUserID_string" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="procurement" column="procurement_id" select="com.unitever.module.procurement.dao.manual.ProcurementDAO.get" />
+		<association property="goods" column="goods_id" select="com.unitever.module.goods.dao.manual.GoodsDAO.get" />
+		<association property="printUser_String" column="printUserID_string" select="com.unitever.auth.user.dao.manual.UserDAO.getUserNameStringByUserIds" />
+	</resultMap>
+
+	<select id="get" resultMap="resultProcurementGoods" parameterType="String">
+		select * from th_procurement_goods
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+<!-- 依据产品ID获取进货单价 -->
+	<select id="getBuyPriceWithGoodsId" resultType="String" parameterType="String">
+		select buyPrice from th_procurement_goods
+		where goods_id=#{id}
+		order by createTime desc
+		limit 0,1
+	</select>
+
+<!-- 依据产品ID获取进货价折扣 -->
+	<select id="getBuyAgioWithGoodsId" resultType="String" parameterType="String">
+		select buyAgio from th_procurement_goods
+		where goods_id=#{id}
+		order by createTime desc
+		limit 0,1
+	</select>
+
+<!-- 依据采购订单获取关联的采购产品 -->
+	<select id="getProcurementGoodsListByProcurementId" resultMap="resultProcurementGoods">
+		select * from th_procurement_goods where procurement_id=#{id} order by goods_id, createTime desc
+	</select>
+
+	<select id="getAll" resultMap="resultProcurementGoods">
+		select * from th_procurement_goods order by createTime desc
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_procurement_goods where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="ProcurementGoods">
+		insert into
+		th_procurement_goods(id,procurement_id,goods_id,buyAgio,salseMoney,salseAgio,goodsPrice,
+				buyCount,printCount,printUserID_string,
+				count,buyPrice,isPrint,isRecord,createTime,ft,fu)
+		value(#{id},#{procurement.id},#{goods.id},#{buyAgio},#{salseMoney},#{salseAgio},#{goodsPrice},
+				#{buyCount},#{printCount},#{printUserID_string},
+				#{count},#{buyPrice},#{isPrint},#{isRecord},#{createTime},#{ft},#{fu})
+	</insert>
+
+	<select id="getCountByProcurementGoods" resultType="Integer" parameterType="ProcurementGoods">
+		select count(*) From th_procurement_goods
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="procurement != null and procurement.id != null and procurement.id != ''">
+				and procurement_id=#{procurement.id}
+			</if>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				and goods_id=#{goods.id}
+			</if>
+			<if test="count != null and count != ''">
+				and count=#{count}
+			</if>
+			<if test="buyCount != null and buyCount != ''">
+				and buyCount=#{buyCount}
+			</if>
+			<if test="buyPrice != null and buyPrice != ''">
+				and buyPrice=#{buyPrice}
+			</if>
+			<if test="buyAgio != null and buyAgio != ''">
+				and buyAgio=#{buyAgio}
+			</if>
+			<if test="salseMoney != null and salseMoney != ''">
+				and salseMoney=#{salseMoney}
+			</if>
+			<if test="salseAgio != null and salseAgio != ''">
+				and salseAgio=#{salseAgio}
+			</if>
+			<if test="goodsPrice != null and goodsPrice != ''">
+				and goodsPrice=#{goodsPrice}
+			</if>
+			<if test="isPrint != null and isPrint != ''">
+				and isPrint=#{isPrint}
+			</if>
+			<if test="isRecord != null and isRecord != ''">
+				and isRecord=#{isRecord}
+			</if>
+			<if test="printCount != null and printCount != ''">
+				and printCount=#{printCount}
+			</if>
+			<if test="printUserID_string != null and printUserID_string != ''">
+				and printUserID_string=#{printUserID_string}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+	</select>
+
+	<select id="getProcurementGoodsByProcurementGoods" resultMap="resultProcurementGoods" parameterType="ProcurementGoods">
+		select * From th_procurement_goods
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="procurement != null and procurement.id != null and procurement.id != ''">
+				and procurement_id=#{procurement.id}
+			</if>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				and goods_id=#{goods.id}
+			</if>
+			<if test="count != null and count != ''">
+				and count=#{count}
+			</if>
+			<if test="buyCount != null and buyCount != ''">
+				and buyCount=#{buyCount}
+			</if>
+			<if test="buyPrice != null and buyPrice != ''">
+				and buyPrice=#{buyPrice}
+			</if>
+			<if test="buyAgio != null and buyAgio != ''">
+				and buyAgio=#{buyAgio}
+			</if>
+			<if test="salseMoney != null and salseMoney != ''">
+				and salseMoney=#{salseMoney}
+			</if>
+			<if test="salseAgio != null and salseAgio != ''">
+				and salseAgio=#{salseAgio}
+			</if>
+			<if test="goodsPrice != null and goodsPrice != ''">
+				and goodsPrice=#{goodsPrice}
+			</if>
+			<if test="isPrint != null and isPrint != ''">
+				and isPrint=#{isPrint}
+			</if>
+			<if test="isRecord != null and isRecord != ''">
+				and isRecord=#{isRecord}
+			</if>
+			<if test="printCount != null and printCount != ''">
+				and printCount=#{printCount}
+			</if>
+			<if test="printUserID_string != null and printUserID_string != ''">
+				and printUserID_string=#{printUserID_string}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+		order by createTime desc
+	</select>
+
+<!-- 更改已打印数量 -->
+	<update id="updatePrintNumber" parameterType="ProcurementGoods">
+		update th_procurement_goods 
+		set printCount=(CAST(IFNULL(printCount,0) as SIGNED)+CAST(#{number} as SIGNED)),
+				printUserID_string=CONCAT(IFNULL(printUserID_string,''),',',#{printUserId})
+		where id=#{id} 
+			and CAST(buyCount as SIGNED)>=(CAST(IFNULL(printCount,0) as SIGNED)+CAST(#{number} as SIGNED))
+	</update>
+
+	<update id="update" parameterType="ProcurementGoods">
+		update th_procurement_goods
+		<set>
+			<if test="procurement != null and procurement.id != null and procurement.id != ''">
+				procurement_id=#{procurement.id},
+			</if>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				goods_id=#{goods.id},
+			</if>
+			<if test="count != null and count != ''">
+				count=#{count},
+			</if>
+			<if test="buyCount != null and buyCount != ''">
+				buyCount=#{buyCount},
+			</if>
+			<if test="buyPrice != null and buyPrice != ''">
+				buyPrice=#{buyPrice},
+			</if>
+			<if test="buyAgio != null and buyAgio != ''">
+				buyAgio=#{buyAgio},
+			</if>
+			<if test="salseMoney != null and salseMoney != ''">
+				salseMoney=#{salseMoney},
+			</if>
+			<if test="salseAgio != null and salseAgio != ''">
+				salseAgio=#{salseAgio},
+			</if>
+			<if test="goodsPrice != null and goodsPrice != ''">
+				goodsPrice=#{goodsPrice},
+			</if>
+			<if test="isPrint != null and isPrint != ''">
+				isPrint=#{isPrint},
+			</if>
+			<if test="isRecord != null and isRecord != ''">
+				isRecord=#{isRecord},
+			</if>
+			<if test="printCount != null and printCount != ''">
+				printCount=#{printCount},
+			</if>
+			<if test="printUserID_string != null and printUserID_string != ''">
+				printUserID_string=#{printUserID_string},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+</mapper>

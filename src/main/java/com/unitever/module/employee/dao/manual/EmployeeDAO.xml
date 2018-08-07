@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.employee.dao.manual.EmployeeDAO">
+	<resultMap type="Employee" id="resultEmployee">
+		<id column="id" property="id" />
+		<result column="name" property="name" />
+		<result column="headimgurl" property="headimgurl" />
+		<result column="openid" property="openid" />
+		<result column="kefuState" property="kefuState" />
+		<result column="kefuStartDate" property="kefuStartDate" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+	</resultMap>
+
+	<select id="get" resultMap="resultEmployee" parameterType="String">
+		select * from th_employee
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultEmployee">
+		select * from th_employee
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_employee where
+		id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="Employee">
+		insert into
+		th_employee(id,name,headimgurl,openid,kefuState,kefuStartDate,createTime,ft,fu)
+		value(#{id},#{name},#{headimgurl},#{openid},'2',null,#{createTime},#{ft},#{fu})
+	</insert>
+
+	<select id="getEmployeeByOpenId" resultMap="resultEmployee" parameterType="String">
+		select * From th_employee
+		where openid=#{openId}
+	</select>
+
+	<select id="getCountByObject" resultType="Integer" parameterType="Employee">
+		select count(*) From th_employee
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="title != null and title != ''">
+				and title like CONCAT('%','${title}','%')
+			</if>
+			<if test="profile != null and profile != ''">
+				and profile=#{profile}
+			</if>
+			<if test="content != null and content != ''">
+				and content=#{content}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+	</select>
+
+	<select id="getEmployeeByEmployee" resultMap="resultEmployee" parameterType="Employee">
+		select * From th_employee
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="name != null and name != ''">
+				and name=#{name}
+			</if>
+			<if test="createTime != null and createTime != ''">
+				and createTime=#{createTime}
+			</if>
+			<if test="headimgurl != null and headimgurl != ''">
+				and headimgurl=#{headimgurl}
+			</if>
+			<if test="openid != null and openid != ''">
+				and openid=#{openid}
+			</if>
+		</where>
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="Employee">
+		update th_employee
+		<set>
+			<if test="name != null and name != ''">
+				name=#{name},
+			</if>
+			<if test="headimgurl != null and headimgurl != ''">
+				headimgurl=#{headimgurl},
+			</if>
+			<if test="openid != null and openid != ''">
+				openid=#{openid},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != '' ">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != '' ">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+	<update id="kefuStart" >
+		update th_employee
+		set kefuState='1',kefuStartDate=now()
+		WHERE openid=#{openId}
+	</update>
+
+	<update id="kefuEnd" >
+		update th_employee
+		set kefuState='2'
+		WHERE openid=#{openId}
+	</update>
+
+</mapper>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.evaluation.dao.manual.EvaluationDAO">
+	<resultMap type="Evaluation" id="resultEvaluation">  
+        <id column="id" property="id" />
+        <result column="content" property="content" />
+        <result column="ft" property="ft" />
+        <result column="fu" property="ft" />
+        <result column="lt" property="ft" />
+        <result column="lu" property="ft" />
+        <result column="createTime" property="createTime" />
+        <association column="id_goods" property="goods" select="com.unitever.module.goods.dao.manual.GoodsDAO.get"/>
+        <association column="id_customer" property="customer" select="com.unitever.module.customer.dao.manual.CustomerDAO.get"/>
+        <collection property="imgUrl" column="id" select="com.unitever.platform.component.attachment.dao.manual.AttachmentDAO.getUrlStringListByOwnerId"/>
+	</resultMap>
+	
+	<select id="get" resultMap="resultEvaluation" parameterType="String">
+		select * from th_evaluation 
+		<where>
+			id=#{id}
+		</where>
+	</select>
+	
+	<select id="getAll" resultMap="resultEvaluation">
+		select * from th_evaluation  order by createTime desc
+	</select>
+	
+	<insert id="save" parameterType="Evaluation">
+		insert into th_evaluation(id,goods_id,customer_id,content,imgName,ft,fu,createTime)
+		 value(#{id},#{goods.id},#{customer.id},#{content},#{imgName},#{ft},#{fu},#{createTime})
+	</insert>
+	
+	<select id="getEvaluationListByGoodsId" resultMap="resultEvaluation" parameterType="String">
+		select * from th_evaluation where goods_id=#{goodsId} order by createTime desc
+	</select>
+	
+	<select id="getEvaluationListWithEvaluation" resultMap="resultEvaluation" parameterType="Evaluation">
+		select * from th_evaluation 
+		<where>
+			1=1
+			<if test="id != null">
+				and id =#{id}
+			</if>
+			<if test="goods != null and goods.id !=null and goods.id != ''">
+				and goods_id=#{goods.id}
+			</if>
+			<if test="customer != null and customer.id !=null and customer.id != ''">
+				and customer_id=#{customer.id}
+			</if>
+			<if test="content !=null">
+				and content=#{content}
+			</if>
+			<if test="imgName !=null">
+				and imgName=#{imgName}
+			</if>
+			<if test="createTime !=null">
+				and createTime=#{createTime}
+			</if>
+		</where>
+		order by createTime desc
+	</select>
+	
+	<update id="update" parameterType="Evaluation">
+		update th_evaluation
+		<set>
+			<if test="goods != null and goods.id != null">goods_id=#{goods.id},</if>
+			<if test="customer !=null and customer.id != null">customer_id=#{customer.id},</if>
+			<if test="content != null">content=#{content},</if>
+			<if test="imgName != null">imgName=#{imgName},</if>
+			<if test="createTime != null createTime != ''">createTime=#{createTime},</if>
+			<if test="'lt' != null and 'lt' != ''" >lt=#{lt},</if>
+			<if test="lu != null and lu != ''">lu=#{lu},</if>
+		</set>
+		where id=#{id}
+	</update>
+</mapper>

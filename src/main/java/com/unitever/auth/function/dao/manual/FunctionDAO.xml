@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.auth.function.dao.manual.FunctionDAO">
+    
+    <resultMap type="Function" id="resultListFunction">  
+        <id column="id" property="id" />
+        <result column="name" property="name"/>  
+        <result column="url" property="url"/>  
+        <result column="description" property="description" />
+        <result column="seq" property="seq" />
+        <result column="level" property="level" />
+        <result column="icon" property="icon" />
+        <association column="parentId" property="parentFunction" select="com.unitever.auth.function.dao.manual.FunctionDAO.get" />
+   		<collection property="operations" column="id" select="com.unitever.auth.operation.dao.manual.OperationDAO.getOperationsByFuncId"/>
+   		<collection property="childrenFunctions" ofType="Function" column="{parentId = id}" select="com.unitever.auth.function.dao.manual.FunctionDAO.getChildFunctionWithid">
+			<id column="id" property="id"/>
+			<result column="name" property="name"/>
+			<result column="url" property="url"/>
+			<result column="description" property="description"/>
+			<result column="level" property="level"/>
+			<result column="seq" property="seq"/>
+			<result column="icon" property="icon" />
+		</collection>
+    </resultMap>
+    
+    <insert id="save" parameterType="Function">
+		insert into auth_function(id,name,url,description,seq,level,parentId)
+		value(#{id},#{name},#{url},#{description},#{seq},#{level},#{parentFunction.id})
+	</insert>
+    
+    <!-- 获取一条数据 -->
+    <select id="get" resultMap="resultListFunction">
+     	select * from auth_function where id=#{id}
+    </select>
+    
+    <!-- 获取一条数据 -->
+    <select id="getChildrenFunctions" resultMap="resultListFunction">
+     	select * from auth_function where parentId=#{id} and level=1 order by CAST(seq AS SIGNED) asc
+    </select>
+    
+	<!-- 获取一条数据 -->
+    <select id="getAll" resultMap="resultListFunction">
+     	select * from auth_function order by CAST(seq AS SIGNED) asc
+    </select>
+    <!-- 删除一条数据 -->
+    <delete id="delete">
+        delete from auth_function where id=#{id}
+    </delete>
+    
+    <!-- 更新一条数据 -->
+    <update id="update" parameterType="Function">
+        update auth_function 
+        <set>
+	         <if test="name != null and name != '' ">  
+	            name=#{name},
+	         </if>
+	         <if test="url != null and url != '' ">  
+	            url=#{url},  
+	         </if>
+	         <if test="description != null and description != '' ">  
+	            description=#{description},
+	         </if>
+	         <if test="seq != null and seq != '' ">  
+	            seq=#{seq},  
+	         </if>
+	         <if test="level != null and level != '' ">  
+	            level=#{level},  
+	         </if>
+	         <if test="parentFunction != null and parentFunction.id != '' and parentFunction.id != null">
+	            parentId=#{parentFunction.id},
+	         </if>
+        </set>
+         WHERE id=#{id}  
+    </update> 
+    
+    <select id="getFunctionWithName" resultMap="resultListFunction">
+    	select * from auth_function where name=#{name}
+    </select>
+    
+    <select id="getChildFunctionWithid" resultMap="resultListFunction" parameterType="java.util.HashMap"> 
+    	select * from auth_function where parentId=${parentId} and level=1 order by CAST(seq AS SIGNED) asc
+    </select>
+    
+     <select id="getParentFunctions" resultMap="resultListFunction">
+     select * from auth_function where level=0 
+     order by CAST(seq AS SIGNED) asc
+    </select>
+    <!-- <![CDATA[ isnull(parentId) || length(trim(parentId))<1 ]]>  -->
+    <select id="getParentFunctionsByRoleId" resultMap="resultListFunction">
+    	select auth_function.id,name,url,description,seq,level,icon,parentId 
+     from auth_function,auth_role_function 
+     where level=0 
+     and auth_function.id=auth_role_function.functionId 
+     and roleId=#{roleId} order by CAST(seq AS SIGNED) asc
+    </select>
+    
+    <select id="getFunctionByFunction" resultMap="resultListFunction" parameterType="Function">
+    	select * From auth_function
+   		<where>
+   			1=1
+   			<if test="id != null">
+			     and id =#{id}
+			</if>
+			<if test="name != null">
+			      and name like CONCAT('%','${name}','%' )  
+			</if>
+			<if test="description != null and description != '' ">  
+	            and description like CONCAT('%','${description}','%' )  
+	         </if>
+	         <if test="url != null and url != '' ">  
+	            and url=#{url},  
+	         </if>
+	         <if test="seq != null and seq != '' ">  
+	            and seq=#{seq},  
+	         </if>
+	         <if test="level != null and level != '' ">  
+	            and level=#{level},  
+	         </if>
+	         <if test="parentFunction != null and parentFunction.id != '' and parentFunction.id != null">
+	            and parentId=#{parentFunction.id},
+	         </if>
+		</where> 
+		order by CAST(seq AS SIGNED) asc
+    </select>
+
+</mapper>

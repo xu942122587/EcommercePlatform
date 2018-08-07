@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.orderAfterSale.dao.manual.OrderAfterSaleDAO">
+	<resultMap type="OrderAfterSale" id="OrderAfterSale">
+		<id column="id" property="id" />
+		<result column="sendMoney" property="sendMoney" />
+		<result column="remark" property="remark" />
+		<result column="isDelete" property="isDelete" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="user" column="User_id" select="com.unitever.auth.user.dao.manual.UserDAO.get" />
+		<association property="orderGoodsQrcode" column="orderGoodsQrcode_id" select="com.unitever.module.orderGoodsQrcode.dao.manual.OrderGoodsQrcodeDAO.get" />
+		<collection property="imgUrl" column="id" select="com.unitever.platform.component.attachment.dao.manual.AttachmentDAO.getUrlStringListByOwnerId"/>
+	</resultMap>
+
+	<select id="get" resultMap="OrderAfterSale" parameterType="String">
+		select * from th_order_afterSale
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="OrderAfterSale">
+		select * from th_order_afterSale order by createTime desc
+	</select>
+	
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_order_afterSale where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="OrderAfterSale">
+		insert into
+		th_order_afterSale(id,orderGoodsQrcode_id,user_id,sendMoney,
+				remark,isDelete,createTime,ft,fu)
+		value(#{id},#{orderGoodsQrcode.id},#{user.id},#{sendMoney},
+				#{remark},#{isDelete},#{createTime},#{ft},#{fu})
+	</insert>
+
+	<select id="getCountByOrderAfterSale" resultType="Integer" parameterType="OrderAfterSale">
+		select count(*) From th_order_afterSale
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="orderGoodsQrcode != null and orderGoodsQrcode.id != null and orderGoodsQrcode.id != ''">
+				and orderGoodsQrcode_id=#{orderGoodsQrcode.id}
+			</if>
+			<if test="user != null and user.id != null and user.id != ''">
+				and user_id=#{user.id}
+			</if>
+			<if test="user != null and user.username != null and user.username != ''">
+				and user_id in (select id from auth_user where username=#{user.username})
+			</if>
+			<if test="sendMoney != null and sendMoney != ''">
+				and sendMoney=#{sendMoney}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+	</select>
+	
+	<select id="getCountByObject" resultType="Integer" parameterType="OrderAfterSale">
+		select count(*) From th_order_afterSale
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="orderGoodsQrcode != null and orderGoodsQrcode.id != null and orderGoodsQrcode.id != ''">
+				and orderGoodsQrcode_id=#{orderGoodsQrcode.id}
+			</if>
+			<if test="user != null and user.id != null and user.id != ''">
+				and user_id=#{user.id}
+			</if>
+			<if test="user != null and user.username != null and user.username != ''">
+				and user_id in (select id from auth_user where username=#{user.username})
+			</if>
+			<if test="sendMoney != null and sendMoney != ''">
+				and sendMoney=#{sendMoney}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+	</select>
+
+	<select id="getOrderAfterSaleByOrderAfterSale" resultMap="OrderAfterSale" parameterType="OrderAfterSale">
+		select * From th_order_afterSale
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="orderGoodsQrcode != null and orderGoodsQrcode.id != null and orderGoodsQrcode.id != ''">
+				and orderGoodsQrcode_id=#{orderGoodsQrcode.id}
+			</if>
+			<if test="user != null and user.id != null and user.id != ''">
+				and user_id=#{user.id}
+			</if>
+			<if test="user != null and user.username != null and user.username != ''">
+				and user_id in (select id from auth_user where username=#{user.username})
+			</if>
+			<if test="sendMoney != null and sendMoney != ''">
+				and sendMoney=#{sendMoney}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+		order by createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+	
+	<update id="update" parameterType="OrderAfterSale">
+		update th_order_afterSale
+		<set>
+			<if test="orderGoodsQrcode != null and orderGoodsQrcode.id != null and orderGoodsQrcode.id != ''">
+				orderGoodsQrcode_id=#{orderGoodsQrcode.id},
+			</if>
+			<if test="user != null and user.id != null and user.id != ''">
+				user_id=#{user.id},
+			</if>
+			<if test="sendMoney != null and sendMoney != ''">
+				sendMoney=#{sendMoney},
+			</if>
+			<if test="remark != null and remark != ''">
+				remark=#{remark},
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				isDelete=#{isDelete},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+</mapper>

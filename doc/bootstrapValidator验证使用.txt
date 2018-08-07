@@ -1,0 +1,22 @@
+required data-bv-notempty-message="不能为空"
+data-bv-different="true" data-bv-different-field="password" data-bv-different-message="用户名和密码不能相同"
+pattern="[a-zA-Z0-9]+"  data-bv-regexp-message="只能包含数字或者英文" 
+data-bv-remote="true" data-bv-remote-url="remote.php" data-bv-remote-message="远程验证"
+data-bv-identical="true" data-bv-identical-field="confirmPassword" data-bv-identical-message="密码和确认密码不一样"
+data-bv-choice="true" data-bv-choice-min="2" data-bv-choice-max="4" data-bv-choice-message="选取2-4个" 
+data-bv-greaterthan-inclusive="false" data-bv-greaterthan-message="输入值必须大于等于..."
+data-bv-lessthan-inclusive="true" data-bv-lessthan-message="输入值必须小于..."
+data-bv-between-message="必须在xx-xx之间" 
+min  最小值
+max  最大值
+maxlength    最大长度
+minlength    最小长度
+type="email" 邮箱
+type="url"   链接
+type="range"  范围
+min="..."
+max="..."
+
+bootstrap validator有两种方式可以验证
+一种是在input标签上去写验证，这种严重的提交按钮必须用submit，否者无法验证，而且在模态框中无效
+还有一种是在js中写，这种都支持

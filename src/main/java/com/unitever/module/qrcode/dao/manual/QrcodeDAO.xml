@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.qrcode.dao.manual.QrcodeDAO">
+	<resultMap type="Qrcode" id="resultQrcode">
+		<id column="id" property="id" />
+		<result column="qrcodeBatch" property="qrcodeBatch" />
+		<result column="procurementPrice" property="procurementPrice" />
+		<result column="procurementBuyCount" property="procurementBuyCount" />
+		<result column="state" property="state" />
+		<result column="logistics" property="logistics" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="goods" column="goods_id" select="com.unitever.module.goods.dao.manual.GoodsDAO.get" />
+		<association property="procurement" column="procurement_id" select="com.unitever.module.procurement.dao.manual.ProcurementDAO.get" />
+		<association property="storage" column="storage_id" select="com.unitever.module.storage.dao.manual.StorageDAO.get" />
+	</resultMap>
+
+	<select id="get" resultMap="resultQrcode" parameterType="String">
+		select * from th_qrcode
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+<!-- 依据二维码Id获取二维码list -->
+	<select id="getPutOutQrcodeListByOrderCode" resultMap="resultQrcode">
+		select qrcode.* 
+		from th_qrcode qrcode,
+			(select GROUP_CONCAT(putOutGoodsQrcodeString) as qrcode_string from th_order_subremark where order_id in (
+					SELECT * 
+					from (
+						(select DISTINCT id from th_order where code=#{orderCode})
+						UNION
+						(SELECT DISTINCT id from th_order where order_id in (select DISTINCT id from th_order where code=#{orderCode}))
+					) AS ORDER_ID_TABLE
+				) or orderGoods_id in (
+					select DISTINCT id from th_order_goods where order_id in (
+						SELECT * 
+						from (
+							(select DISTINCT id from th_order where code=#{orderCode})
+							UNION
+							(SELECT DISTINCT id from th_order where order_id in (select DISTINCT id from th_order where code=#{orderCode}))
+						) AS ORDER_ID_TABLE
+					)
+				)
+			) as putOutQrocde_table
+		where 0&lt;INSTR(putOutQrocde_table.qrcode_string,qrcode.id)
+		order by createTime desc
+	</select>
+
+<!-- 依据二维码Id获取二维码list -->
+	<select id="getQrcodeListById" resultMap="resultQrcode">
+		select * from th_qrcode where id=#{id} order by createTime desc
+	</select>
+
+	<select id="getQrcodeByQRCdodeBatch" resultMap="resultQrcode">
+		select * from th_qrcode where qrcodeBatch=#{qrcodeBatch} order by createTime desc
+	</select>
+
+	<select id="getAll" resultMap="resultQrcode">
+		select * from th_qrcode order by createTime desc
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_qrcode where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="Qrcode">
+		insert into
+		th_qrcode(id,goods_id,qrcodeBatch,procurementPrice,state,logistics,
+				procurement_id,createTime,ft,fu,storage_id,procurementBuyCount)
+		value(#{id},#{goods.id},#{qrcodeBatch},#{procurementPrice},#{state},#{logistics},
+				#{procurement.id},#{createTime},#{ft},#{fu},#{storage.id},#{procurementBuyCount})
+	</insert>
+
+	<select id="getCountByQrcode" resultType="Integer" parameterType="Qrcode">
+		SELECT count(*) FROM (
+		select COUNT(*)
+		From th_qrcode
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				and goods_id=#{goods.id}
+			</if>
+			<if test="qrcodeBatch != null and qrcodeBatch != ''">
+				and qrcodeBatch=#{qrcodeBatch}
+			</if>
+			<if test="procurementPrice != null and procurementPrice != ''">
+				and procurementPrice=#{procurementPrice}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="logistics != null and logistics != ''">
+				and logistics=#{logistics}
+			</if>
+			<if test="procurement != null and procurement.id != null and procurement.id != ''">
+				and procurement_id=#{procurement.id}
+			</if>
+			<if test="storage != null and storage.id != null and storage.id != ''">
+				and storage_id=#{storage.id}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			<if test="storeId != null and storeId != ''">
+				and goods_id in (select id from th_goods where store_id=#{storeId})
+			</if>
+			<if test="procurementBuyCount != null and procurementBuyCount != ''">
+				and procurementBuyCount=#{procurementBuyCount}
+			</if>
+		</where>
+		group by qrcodeBatch
+		order by createTime desc ) as groupBy
+	</select>
+	
+	<select id="getQrcodeByQrcode" resultMap="resultQrcode" parameterType="Qrcode">
+		select id,goods_id,qrcodeBatch,procurementPrice,state,logistics,
+				procurement_id,createTime,ft,fu,lt,lu,storage_id,procurementBuyCount,COUNT(*) as printCount
+		From th_qrcode
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				and goods_id=#{goods.id}
+			</if>
+			<if test="qrcodeBatch != null and qrcodeBatch != ''">
+				and qrcodeBatch=#{qrcodeBatch}
+			</if>
+			<if test="procurementPrice != null and procurementPrice != ''">
+				and procurementPrice=#{procurementPrice}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="logistics != null and logistics != ''">
+				and logistics=#{logistics}
+			</if>
+			<if test="procurement != null and procurement.id != null and procurement.id != ''">
+				and procurement_id=#{procurement.id}
+			</if>
+			<if test="storage != null and storage.id != null and storage.id != ''">
+				and storage_id=#{storage.id}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			<if test="storeId != null and storeId != ''">
+				and goods_id in (select id from th_goods where store_id=#{storeId})
+			</if>
+			<if test="procurementBuyCount != null and procurementBuyCount != ''">
+				and procurementBuyCount=#{procurementBuyCount}
+			</if>
+		</where>
+		group by qrcodeBatch
+		order by createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<select id="getCountByObject" resultType="Integer" parameterType="Qrcode">
+		select COUNT(*) From th_qrcode
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				and goods_id=#{goods.id}
+			</if>
+			<if test="qrcodeBatch != null and qrcodeBatch != ''">
+				and qrcodeBatch=#{qrcodeBatch}
+			</if>
+			<if test="procurementPrice != null and procurementPrice != ''">
+				and procurementPrice=#{procurementPrice}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="logistics != null and logistics != ''">
+				and logistics=#{logistics}
+			</if>
+			<if test="procurement != null and procurement.id != null and procurement.id != ''">
+				and procurement_id=#{procurement.id}
+			</if>
+			<if test="storage != null and storage.id != null and storage.id != ''">
+				and storage_id=#{storage.id}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			<if test="storeId != null and storeId != ''">
+				and goods_id in (select id from th_goods where store_id=#{storeId})
+			</if>
+			<if test="procurementBuyCount != null and procurementBuyCount != ''">
+				and procurementBuyCount=#{procurementBuyCount}
+			</if>
+		</where>
+		order by createTime desc
+	</select>
+	
+	<select id="getQrcodeListByQrcode" resultMap="resultQrcode" parameterType="Qrcode">
+		select * From th_qrcode
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				and goods_id=#{goods.id}
+			</if>
+			<if test="qrcodeBatch != null and qrcodeBatch != ''">
+				and qrcodeBatch=#{qrcodeBatch}
+			</if>
+			<if test="procurementPrice != null and procurementPrice != ''">
+				and procurementPrice=#{procurementPrice}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="logistics != null and logistics != ''">
+				and logistics=#{logistics}
+			</if>
+			<if test="procurement != null and procurement.id != null and procurement.id != ''">
+				and procurement_id=#{procurement.id}
+			</if>
+			<if test="storage != null and storage.id != null and storage.id != ''">
+				and storage_id=#{storage.id}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			<if test="storeId != null and storeId != ''">
+				and goods_id in (select id from th_goods where store_id=#{storeId})
+			</if>
+			<if test="procurementBuyCount != null and procurementBuyCount != ''">
+				and procurementBuyCount=#{procurementBuyCount}
+			</if>
+		</where>
+		order by createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="Qrcode">
+		update th_qrcode
+		<set>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				goods_id=#{goods.id},
+			</if>
+			<if test="qrcodeBatch != null and qrcodeBatch != ''">
+				qrcodeBatch=#{qrcodeBatch},
+			</if>
+			<if test="procurementPrice != null and procurementPrice != ''">
+				procurementPrice=#{procurementPrice},
+			</if>
+			<if test="procurementBuyCount != null and procurementBuyCount != ''">
+				procurementBuyCount=#{procurementBuyCount},
+			</if>
+			<if test="state != null and state != ''">
+				state=#{state},
+			</if>
+			<if test="logistics != null and logistics != ''">
+				logistics=#{logistics},
+			</if>
+			<if test="procurement != null and procurement.id != null and procurement.id != ''">
+				procurement_id=#{procurement.id},
+			</if>
+			<if test="storage != null and storage.id != null and storage.id != ''">
+				storage_id=#{storage.id},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+<!-- 根据ProcurementId修改所有qrcode状态 -->
+	<update id="updateAllQrcodeStateByProcurementId" parameterType="Qrcode">
+		update th_qrcode
+		<set>
+			<if test="state != null and state != ''">
+				state=#{state},
+			</if>
+		</set>
+		WHERE state='4' and id in (select qrcode_id from th_procurement_qrcode where procurement_id=#{procurementId})
+	</update>
+	
+<!-- 根据AllocationId修改所有qrcode状态 -->
+	<update id="updateAllQrcodeStateByAllocationId" parameterType="Qrcode">
+		update th_qrcode
+		<set>
+			<if test="state != null and state != ''">
+				state=#{state},
+			</if>
+		</set>
+		WHERE state='4' and id in (select qrcode_id from th_allocation_qrcode where allocation_id=#{allocationId})
+	</update>
+	
+<!-- state由正常变锁定 -->
+	<update id="updateStateOneToFour" parameterType="Qrcode">
+		update th_qrcode 
+		<set>
+			state='4'
+		</set>
+		WHERE state='1' and id=#{id}
+	</update>
+	
+<!-- state由锁定变正常 -->
+	<update id="updateStateFourToOne" parameterType="Qrcode">
+		update th_qrcode 
+		<set>
+			<if test="storage != null and storage.id != null and storage.id != ''">
+				storage_id=#{storage.id},
+			</if>
+			<if test="logistics != null and logistics != ''">
+				logistics=CONCAT(logistics,'-',#{logistics}),
+			</if>
+			state='1'
+		</set>
+		WHERE state='4' and id=#{id}
+	</update>
+	
+<!-- state由锁定变卖出 -->
+	<update id="updateStateFourToTwo" parameterType="Qrcode">
+		update th_qrcode 
+		<set>
+			<if test="logistics != null and logistics != ''">
+				logistics=CONCAT(logistics,'-',#{logistics}),
+			</if>
+			state='2'
+		</set>
+		WHERE state='4' and id=#{id}
+	</update>
+	
+<!-- state由卖出变正常 -->
+	<update id="updateStateTwoToOne" parameterType="Qrcode">
+		update th_qrcode 
+		<set>
+			<if test="logistics != null and logistics != ''">
+				logistics=CONCAT(logistics,'-',#{logistics}),
+			</if>
+			state='1'
+		</set>
+		WHERE state='2' and id=#{id}
+	</update>
+	
+<!-- state由正常变卖出 -->
+	<update id="updateStateOneToTwo" parameterType="Qrcode">
+		update th_qrcode 
+		<set>
+			<if test="logistics != null and logistics != ''">
+				logistics=CONCAT(logistics,'-',#{logistics}),
+			</if>
+			state='2'
+		</set>
+		WHERE state='1' and id=#{id}
+	</update>
+	
+	<update id="updateStateFourToOneByOrderId" parameterType="String">
+		update th_qrcode 
+		<set>
+			state='1'
+		</set>
+		WHERE state='4' and id in 
+			(select qrcode_id from th_order_goods_qrcode WHERE order_goods_id in 
+				(select id FROM th_order_goods where type='1' and order_id=#{orderId}))
+	</update>
+</mapper>

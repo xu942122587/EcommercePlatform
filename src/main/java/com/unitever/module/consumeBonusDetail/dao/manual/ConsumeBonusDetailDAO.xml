@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.consumeBonusDetail.dao.manual.ConsumeBonusDetailDAO">
+	<resultMap type="ConsumeBonusDetail" id="resultConsumeBonusDetail">
+		<id column="id" property="id" />
+		<result column="targetMoney" property="targetMoney" />
+		<result column="money" property="money" />
+		<result column="month" property="month" />
+		<result column="sumMoney" property="sumMoney" />
+		<result column="sumTargetMoney" property="sumTargetMoney" />
+		<result column="isPayMoney" property="isPayMoney" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association column="guideUser_id" property="guideUser" select="com.unitever.auth.user.dao.manual.UserDAO.get" />
+	</resultMap>
+
+	<select id="get" resultMap="resultConsumeBonusDetail" parameterType="String">
+		select * from th_consume_bonus_detail
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultConsumeBonusDetail">
+		select * from th_consume_bonus_detail order by createTime desc
+	</select>
+	
+	<!-- 充值总额 -->
+	<select id="getConsumeBonusDetailSumTargetMoney" resultType="String">
+		SELECT IFNULL(ROUND(SUM(targetMoney),2),0) 
+		from th_consume_bonus_detail
+		where month&gt;=#{startDate}
+			and month&lt;=#{endDate}
+			<if test="storeId != null and storeId != ''">
+				and guideUser_id in(select id from auth_user where store_id=#{storeId})
+			</if>
+			and isPayMoney='1'
+	</select>
+	
+	<!-- 充值提成 -->
+	<select id="getConsumeBonusDetailSumMoney" resultType="String">
+		SELECT IFNULL(ROUND(SUM(money),2),0) 
+		from th_consume_bonus_detail
+		where month&gt;=#{startDate}
+			and month&lt;=#{endDate}
+			<if test="storeId != null and storeId != ''">
+				and guideUser_id in(select id from auth_user where store_id=#{storeId})
+			</if>
+			and isPayMoney='1'
+	</select>
+	
+<!-- 根据用户分组获取充值提成记录 -->
+	<select id="getConsumeBonusDetailGroupByGuideUser" resultMap="resultConsumeBonusDetail">
+		select guideUser_id,sum(money) as sumMoney,sum(targetMoney) as sumTargetMoney from th_consume_bonus_detail
+		<where>
+			1=1
+			<if test="guideUser != null and guideUser.username != null and guideUser.username != ''">
+				and guideUser_id in (select id from auth_user where username like CONCAT('%','#{guideUser.username}','%'))
+			</if>
+		</where>
+		group by guideUser_id order by sumTargetMoney desc
+	</select>
+	
+<!-- 根据GuideUserId获取提成记录详情 -->
+	<select id="getConsumeBonusDetailByGuideUserId" resultMap="resultConsumeBonusDetail">
+		select * from th_consume_bonus_detail where guideUser_id=#{guideUserId} order by createTime desc
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_consume_bonus_detail where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="ConsumeBonusDetail">
+		insert into th_consume_bonus_detail(id,targetMoney,createTime,ft,fu,money,month,isPayMoney,guideUser_id)
+		value(#{id},#{targetMoney},#{createTime},#{ft},#{fu},#{money},#{month},#{isPayMoney},#{guideUser.id})
+	</insert>
+
+	<select id="getCountByObject" resultType="Integer" parameterType="ConsumeBonusDetail">
+		select count(*) From th_consume_bonus_detail
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				and guideUser_id=#{guideUser.id}
+			</if>
+			<if test="targetMoney != null and targetMoney != ''">
+				and targetMoney=#{targetMoney}
+			</if>
+			<if test="money != null and money != ''">
+				and money=#{money}
+			</if>
+			<if test="month != null and month != ''">
+				and month=#{month}
+			</if>
+			<if test="isPayMoney != null and isPayMoney != ''">
+				and isPayMoney=#{isPayMoney}
+			</if>
+		</where>
+	</select>
+
+	<select id="getConsumeBonusDetailByConsumeBonusDetail" resultMap="resultConsumeBonusDetail" parameterType="ConsumeBonusDetail">
+		select * From th_consume_bonus_detail
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				and guideUser_id=#{guideUser.id}
+			</if>
+			<if test="targetMoney != null and targetMoney != ''">
+				and targetMoney=#{targetMoney}
+			</if>
+			<if test="money != null and money != ''">
+				and money=#{money}
+			</if>
+			<if test="month != null and month != ''">
+				and month=#{month}
+			</if>
+			<if test="isPayMoney != null and isPayMoney != ''">
+				and isPayMoney=#{isPayMoney}
+			</if>
+		</where>
+		order by CAST(money as SIGNED)
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="ConsumeBonusDetail">
+		update th_consume_bonus_detail
+		<set>
+			<if test="targetMoney != null and targetMoney != ''">
+				targetMoney=#{targetMoney},
+			</if>
+			<if test="money != null and money != ''">
+				money=#{money},
+			</if>
+			<if test="month != null and month != ''">
+				month=#{month},
+			</if>
+			<if test="isPayMoney != null and isPayMoney != ''">
+				isPayMoney=#{isPayMoney},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+</mapper>

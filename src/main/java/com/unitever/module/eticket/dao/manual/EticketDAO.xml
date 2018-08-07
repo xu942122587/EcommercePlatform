@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.eticket.dao.manual.EticketDAO">
+	<resultMap type="Eticket" id="resultEticket">
+		<id column="id" property="id" />
+		<result column="name" property="name" />
+		<result column="type" property="type" />
+		<result column="outType" property="outType" />
+		<result column="dateLimit" property="dateLimit" />
+		<result column="price" property="price" />
+		<result column="outLimit" property="outLimit" />
+		<result column="useLimit" property="useLimit" />
+		<result column="isDelete" property="isDelete" />
+		<result column="stopSendTime" property="stopSendTime" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="fu" property="ft" />
+		<result column="lt" property="ft" />
+		<result column="lu" property="ft" />
+		<association property="outStore" column="outStore_id" select="com.unitever.module.store.dao.manual.StoreDAO.get"/>
+		<association property="useStore" column="useStore_id" select="com.unitever.module.store.dao.manual.StoreDAO.get"/>
+	</resultMap>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_eticket where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="Eticket">
+		insert into th_eticket(id,name,createTime,dateLimit,price,outStore_id,useStore_id,outLimit,useLimit,type,isDelete,outType,ft,fu,stopSendTime)
+		value(#{id},#{name},#{createTime},#{dateLimit},#{price},#{outStore.id},#{useStore.id},#{outLimit},#{useLimit},#{type},#{isDelete},#{outType},#{ft},#{fu},#{stopSendTime})
+	</insert>
+	
+	<select id="get" resultMap="resultEticket" parameterType="String">
+		select * from th_eticket
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultEticket">
+		select * from th_eticket and isDelete=1 order by createTime desc
+	</select>
+
+<!-- 获取手动发放电子券列表 -->
+	<select id="getAllManualEticket" resultMap="resultEticket">
+		select * from th_eticket where outType=1 and isDelete=1 and now()&lt;stopSendTime order by createTime desc
+	</select>
+
+<!-- 获取购物发放的发放电子券列表 -->
+	<select id="getAllAutoBuyEticket" resultMap="resultEticket">
+		select * from th_eticket 
+		where outType=2 and (outStore_id=#{storeId} or outStore_id is null or outStore_id='')
+			and isDelete=1
+			and now()&lt;stopSendTime
+			and cast(#{payMoney} AS decimal(38,2))&gt;=cast(outLimit AS decimal(38,2))
+		order by cast(ifnull(outStore_id,'0') AS decimal(38,2)) desc,
+			cast(outLimit AS decimal(38,2)) desc,
+			cast(price AS decimal(38,2)) desc,
+			cast(useLimit AS decimal(38,2)) desc
+		limit 0,1
+	</select>
+
+<!-- 获取注册发放的发放电子券列表 -->
+	<select id="getAllAutoRegisterEticket" resultMap="resultEticket">
+		select * from th_eticket
+		where outType=3
+			and isDelete=1
+			and now()&lt;stopSendTime
+		order by cast(outLimit AS decimal(38,2)) desc,
+			cast(price AS decimal(38,2)) desc,
+			cast(useLimit AS decimal(38,2)) desc
+		limit 0,1
+	</select>
+
+<!-- 获取充值发放的发放电子券列表 -->
+	<select id="getAllAutoRechargeEticket" resultMap="resultEticket">
+		select * from th_eticket
+		where outType=4
+			and isDelete=1
+			and now()&lt;stopSendTime
+		order by cast(outLimit AS decimal(38,2)) desc,
+			cast(price AS decimal(38,2)) desc,
+			cast(useLimit AS decimal(38,2)) desc
+		limit 0,1
+	</select>
+
+<!-- 获取生日发放的发放电子券列表 -->
+	<select id="getAllAutoBirthdayEticket" resultMap="resultEticket">
+		select * from th_eticket
+		where outType=5
+			and isDelete=1
+			and now()&lt;stopSendTime
+		order by cast(outLimit AS decimal(38,2)) desc,
+			cast(price AS decimal(38,2)) desc,
+			cast(useLimit AS decimal(38,2)) desc
+		limit 0,1
+	</select>
+
+	<select id="getCountByObject" resultType="Integer" parameterType="Eticket">
+		select count(*) From th_eticket
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="name != null and name != ''">
+				and name like CONCAT('%','${name}','%')
+			</if>
+			<if test="createTime != null and createTime != ''">
+				and createTime=#{createTime}
+			</if>
+			<if test="dateLimit != null and dateLimit != ''">
+				and dateLimit=#{dateLimit}
+			</if>
+			<if test="price != null and price != ''">
+				and price=#{price}
+			</if>
+			<if test="outStore != null and outStore.id != null and outStore.id != ''">
+				and outStore_id=#{outStore.id}
+			</if>
+			<if test="useStore != null and useStore.id != null and useStore.id != ''">
+				and useStore_id=#{useStore.id}
+			</if>
+			<if test="outLimit != null and outLimit != ''">
+				and outLimit=#{outLimit}
+			</if>
+			<if test="useLimit != null and useLimit != ''">
+				and useLimit=#{useLimit}
+			</if>
+			<if test="type != null and type != ''">
+				and type=#{type}
+			</if>
+			<if test="outType != null and outType != ''">
+				and outType=#{outType}
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			and isDelete=1
+		</where>
+	</select>
+
+	<select id="getEticketByEticket" resultMap="resultEticket" parameterType="Eticket">
+		select * From th_eticket
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="name != null and name != ''">
+				and name like CONCAT('%','${name}','%')
+			</if>
+			<if test="createTime != null and createTime != ''">
+				and createTime=#{createTime}
+			</if>
+			<if test="dateLimit != null and dateLimit != ''">
+				and dateLimit=#{dateLimit}
+			</if>
+			<if test="price != null and price != ''">
+				and price=#{price}
+			</if>
+			<if test="outStore != null and outStore.id != null and outStore.id != ''">
+				and outStore_id=#{outStore.id}
+			</if>
+			<if test="useStore != null and useStore.id != null and useStore.id != ''">
+				and useStore_id=#{useStore.id}
+			</if>
+			<if test="outLimit != null and outLimit != ''">
+				and outLimit=#{outLimit}
+			</if>
+			<if test="useLimit != null and useLimit != ''">
+				and useLimit=#{useLimit}
+			</if>
+			<if test="type != null and type != ''">
+				and type=#{type}
+			</if>
+			<if test="outType != null and outType != ''">
+				and outType=#{outType}
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			and isDelete=1
+		</where>
+		order by createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="Eticket">
+		update th_eticket
+		<set>
+			<if test="name != null and name != ''">
+				name=#{name},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="dateLimit != null and dateLimit != ''">
+				dateLimit=#{dateLimit},
+			</if>
+			<if test="price != null and price != ''">
+				price=#{price},
+			</if>
+			<if test="outStore != null and outStore.id != null and outStore.id != ''">
+				outStore_id=#{outStore.id},
+			</if>
+			<if test="outStore == null or outStore.id == null or outStore.id == ''">
+				outStore_id=null,
+			</if>
+			<if test="useStore != null and useStore.id != null and useStore.id != ''">
+				useStore_id=#{useStore.id},
+			</if>
+			<if test="useStore == null or useStore.id == null or useStore.id == ''">
+				useStore_id=null,
+			</if>
+			<if test="outLimit != null and outLimit != ''">
+				outLimit=#{outLimit},
+			</if>
+			<if test="useLimit != null and useLimit != ''">
+				useLimit=#{useLimit},
+			</if>
+			<if test="type != null and type != ''">
+				type=#{type},
+			</if>
+			<if test="outType != null and outType != ''">
+				outType=#{outType},
+			</if>
+			<if test="stopSendTime != null and stopSendTime != ''">
+				stopSendTime=#{stopSendTime},
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				isDelete=#{isDelete},
+			</if>
+			<if test="'lt' != null and 'lt' != ''" >lt=#{lt},</if>
+			<if test="lu != null and lu != ''">lu=#{lu},</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+	<update id="deleteEticket">
+		update th_eticket set isDelete='2' WHERE id=#{id} and isDelete='1'
+	</update>
+</mapper>

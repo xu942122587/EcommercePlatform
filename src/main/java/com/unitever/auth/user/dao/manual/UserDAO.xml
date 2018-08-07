@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.auth.user.dao.manual.UserDAO">
+	<resultMap type="User" id="resultListUser">
+		<id column="id" property="id" />
+		<result column="username" property="username" />
+		<result column="password" property="password" />
+		<result column="name" property="name" />
+		<result column="state" property="state" />
+		<result column="phone" property="phone" />
+		<result column="userCode" property="userCode" />
+		<result column="openId" property="openId" />
+		<result column="joinTime" property="joinTime" />
+		<result column="idCard" property="idCard" />
+		<result column="job" property="job" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association column="roleId" property="role" select="com.unitever.auth.role.dao.manual.RoleDAO.get" />
+		<association column="store_id" property="store" select="com.unitever.module.store.dao.manual.StoreDAO.get" />
+	</resultMap>
+
+	<insert id="save" parameterType="User">
+		insert into
+		auth_user(id,username,password,roleId,name,phone,openId,ft,fu,state,store_id,userCode,job,joinTime,idCard)
+		value(#{id},#{username},#{password},#{role.id},#{name},#{phone},#{openId},#{ft},#{fu},#{state},#{store.id},#{userCode},#{job},#{joinTime},#{idCard})
+	</insert>
+
+	<!-- 依据门店ID获取关联用户 -->
+	<select id="getUserNameStringByUserIds" resultType="String">
+		select GROUP_CONCAT(name) from auth_user where find_in_set(id,#{printUserID_string})
+	</select>
+
+	<!-- 依据门店ID获取关联用户 -->
+	<select id="getUserListByStoreId" resultMap="resultListUser">
+		select * from auth_user where store_id=#{storeId}
+	</select>
+	
+	<!-- 获取导购列表 -->
+	<select id="getGuideUserList" resultMap="resultListUser">
+		select * from auth_user where roleId in (select id from auth_role where roleKey='guide')
+	</select>
+
+	<!-- 获取一条数据 -->
+	<select id="get" resultMap="resultListUser">
+		select * from auth_user where id=#{id}
+	</select>
+
+	<!-- 依据ID获取名称 -->
+	<select id="getNameById" resultType="String">
+		select name from auth_user where id=#{id}
+	</select>
+
+	<!-- 获取全部 -->
+	<select id="getAll" resultMap="resultListUser">
+		select * from auth_user
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete">
+		delete from auth_user where id=#{id}
+	</delete>
+
+	<!-- 更新一条数据 -->
+	<update id="update" parameterType="User">
+		update auth_user
+		<set>
+			<if test="username != null and username != '' ">
+				username=#{username},
+			</if>
+			<if test="password != null and password != '' ">
+				password=#{password},
+			</if>
+			<if test="role != null  and role.id != null and role.id != '' ">
+				roleId=#{role.id},
+			</if>
+			<if test="name != null and name != '' ">
+				name=#{name},
+			</if>
+			<if test="state != null and state != '' ">
+				state=#{state},
+			</if>
+			<if test="phone != null and phone != '' ">
+				phone=#{phone},
+			</if>
+			<if test="userCode != null and userCode != '' ">
+				userCode=#{userCode},
+			</if>
+			<if test="openId != null and openId != '' ">
+				openId=#{openId},
+			</if>
+			<if test="joinTime != null and joinTime != '' ">
+				joinTime=#{joinTime},
+			</if>
+			<if test="job != null and job != '' ">
+				job=#{job},
+			</if>
+			<if test="idCard != null and idCard != '' ">
+				idCard=#{idCard},
+			</if>
+			<if test="store != null  and store.id != null and store.id != '' ">
+				store_id=#{store.id},
+			</if>
+			<if test="store == null  or store.id == null or store.id == '' ">
+				store_id=null,
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu}
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+	<select id="getUserWithLoginName" resultMap="resultListUser">
+		select * from auth_user where username=#{username} and state='1'
+	</select>
+
+	<select id="getCountByObject" resultType="Integer" parameterType="User">
+		select count(*) From auth_user
+		<where>
+			1=1
+			<if test="id != null">
+				and id=#{id}
+			</if>
+			<if test="username != null and username != '' ">
+				and username=#{username}
+			</if>
+			<if test="name != null and name!=''">
+				and name like CONCAT('%','${name}','%' )
+			</if>
+			<if test="role != null  and role.id != null and role.id != '' ">
+				and roleId=#{role.id}
+			</if>
+			<if test="store != null  and store.id != null and store.id != '' ">
+				and store_id=#{store.id}
+			</if>
+			<if test="state != null and state != '' ">
+				and state=#{state}
+			</if>
+			<if test="phone != null and phone != '' ">
+				and phone=#{phone}
+			</if>
+			<if test="job != null and job != '' ">
+				and job=#{job}
+			</if>
+			<if test="idCard != null and idCard != '' ">
+				and idCard=#{idCard}
+			</if>
+			<if test="joinTime != null and joinTime != '' ">
+				and joinTime=#{joinTime}
+			</if>
+			<if test="userCode != null and userCode != '' ">
+				and userCode=#{userCode}
+			</if>
+			<if test="openId != null and openId != '' ">
+				and openId=#{openId}
+			</if>
+		</where>
+	</select>
+	
+	<select id="getUserListWithUser" resultMap="resultListUser" parameterType="User">
+		select * From auth_user
+		<where>
+			1=1
+			<if test="id != null">
+				and id=#{id}
+			</if>
+			<if test="username != null and username != '' ">
+				and username=#{username}
+			</if>
+			<if test="name != null and name!=''">
+				and name like CONCAT('%','${name}','%' )
+			</if>
+			<if test="role != null  and role.id != null and role.id != '' ">
+				and roleId=#{role.id}
+			</if>
+			<if test="store != null  and store.id != null and store.id != '' ">
+				and store_id=#{store.id}
+			</if>
+			<if test="state != null and state != '' ">
+				and state=#{state}
+			</if>
+			<if test="phone != null and phone != '' ">
+				and phone=#{phone}
+			</if>
+			<if test="job != null and job != '' ">
+				and job=#{job}
+			</if>
+			<if test="idCard != null and idCard != '' ">
+				and idCard=#{idCard}
+			</if>
+			<if test="joinTime != null and joinTime != '' ">
+				and joinTime=#{joinTime}
+			</if>
+			<if test="userCode != null and userCode != '' ">
+				and userCode=#{userCode}
+			</if>
+			<if test="openId != null and openId != '' ">
+				and openId=#{openId}
+			</if>
+		</where>
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<select id="getAllNoSYSUserList" resultType="User">
+		select * from auth_user where roleId in (select id from auth_role where type!='1')
+	</select>
+</mapper>

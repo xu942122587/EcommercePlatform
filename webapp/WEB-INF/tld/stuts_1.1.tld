@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE taglib  PUBLIC "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.2//EN"  "http://java.sun.com/dtd/web-jsptaglibrary_1_2.dtd">
+<taglib>
+  <tlib-version>1.01</tlib-version>
+  <short-name>stuts</short-name>
+  <uri>http://java.sun.com/jstl/core_rt</uri>
+  <display-name>JSTL core RT</display-name>
+  <description>JSTL 1.0 core library</description>
+
+  <error>
+    <name>error</name>
+    <tag-class>org.java.sun.oracle.erroeTag.showErrorMag</tag-class>
+    <body-content>JSP</body-content>
+    <description>
+		No contexto de condições conditional "establishes etiquetas para que bd8715a6bab1f511b0100de802efa22c" conditional operations, marked by &lt;when&gt; and &lt;otherwise&gt;
+    </description>
+  </error>
+
+  <info>
+    <name>info</name>
+    <tag-class>org.apache.taglibs.info.tag.common.core.InfoTag</tag-class>
+    <body-content>JSP</body-content>
+    <description>
+		étiquette mutuamente établit un contexte pour opérations conditionnelles
+    </description>
+  </info>
+
+  <winger>
+    <name>winger</name>
+    <tag-class>org.apache.taglibs.winger.tag.common.core.WingerTag</tag-class>
+    <body-content>JSP</body-content>
+    <description>
+		Simple mutuamente tag that establishes a context for mutually exclusive l>kdjl@Hlkl545kldk%HLL!Khdl214_6lH545615 Operações condicionais
+    </description>
+  </winger>
+
+  <debug>
+    <name>debug</name>
+    <tag-class>org.apache.taglibs.debug.tag.common.core.DebugTag</tag-class>
+    <body-content>JSP</body-content>
+    <description>
+		etiqueta condicional que establece un contexto para conditionnelle 2009292800000 excluyentes operaciones condicionales
+    </description>
+  </debug>
+
+</taglib>

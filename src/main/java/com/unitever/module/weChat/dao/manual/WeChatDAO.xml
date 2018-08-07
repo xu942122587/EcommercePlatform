@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.weChat.dao.manual.WeChatDAO">
+	<resultMap type="WeChat" id="resultWeChat">
+		<id column="id" property="id" />
+		<result column="wechatnum" property="wechatnum" />
+		<result column="name" property="name" />
+		<result column="appid" property="appid" />
+		<result column="appsecret" property="appsecret" />
+		<result column="mchid" property="mchid" />
+		<result column="apisecret" property="apisecret" />
+		<result column="accesstoken" property="accesstoken" />
+		<result column="jsapiticket" property="jsapiticket" />
+		<result column="expirestime" property="expirestime" />
+		<result column="domainName" property="domainName" />
+		<result column="tel" property="tel" />
+		<result column="wishing" property="wishing" />
+		<result column="actName" property="actName" />
+		<result column="actRemark" property="actRemark" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+	</resultMap>
+
+	<select id="get" resultMap="resultWeChat" parameterType="String">
+		select * from th_wechat
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultWeChat">
+		select * from th_wechat
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_wechat where
+		id=#{id};
+	</delete>
+
+	<select id="getWeChatWithWeChatNum" resultMap="resultWeChat">
+		select * from
+		th_wechat where wechatnum=#{wechatnum}
+	</select>
+	
+	<select id="getWeChatWithAppId" resultMap="resultWeChat">
+		select * from
+		th_wechat where appid=#{appid}
+	</select>
+
+	<select id="getWeChatByWeChat" resultMap="resultWeChat" parameterType="WeChat">
+		select * from th_wechat
+		<where>
+			1=1
+			<if test="name != null and name != '' ">
+				and name=#{name}
+			</if>
+			<if test="wechatnum != null and wechatnum != '' ">
+				and wechatnum=#{wechatnum}
+			</if>
+			<if test="appid != null and appid != '' ">
+				and appid=#{appid}
+			</if>
+			<if test="appsecret != null and appsecret != '' ">
+				and appsecret=#{appsecret}
+			</if>
+			<if test="mchid != null and mchid != '' ">
+				and mchid=#{mchid}
+			</if>
+			<if test="apisecret != null and apisecret != '' ">
+				and apisecret=#{apisecret}
+			</if>
+			<if test="domainName != null and domainName != '' ">
+				and domainName=#{domainName}
+			</if>
+			<if test="tel != null and tel != '' ">
+				and tel=#{tel}
+			</if>
+			<if test="wishing != null and wishing != '' ">
+				and wishing=#{wishing}
+			</if>
+			<if test="actName != null and actName != '' ">
+				and actName=#{actName}
+			</if>
+			<if test="actRemark != null and actRemark != '' ">
+				and actRemark=#{actRemark}
+			</if>
+		</where>
+	</select>
+
+	<!-- 更新一条数据 -->
+	<update id="update" parameterType="WeChat">
+		update th_wechat
+		<set>
+			<if test="name != null and name != '' ">
+				name=#{name},
+			</if>
+			<if test="wechatnum != null and wechatnum != '' ">
+				wechatnum=#{wechatnum},
+			</if>
+			<if test="accesstoken != null and accesstoken != '' ">
+				accesstoken=#{accesstoken},
+			</if>
+			<if test="jsapiticket != null and jsapiticket != '' ">
+				jsapiticket=#{jsapiticket},
+			</if>
+			<if test="expirestime != null and expirestime != '' ">
+				expirestime=#{expirestime},
+			</if>
+			<if test="appid != null and appid != '' ">
+				appid=#{appid},
+			</if>
+			<if test="appsecret != null and appsecret != '' ">
+				appsecret=#{appsecret},
+			</if>
+			<if test="mchid != null and mchid != '' ">
+				mchid=#{mchid},
+			</if>
+			<if test="apisecret != null and apisecret != '' ">
+				apisecret=#{apisecret},
+			</if>
+			<if test="domainName != null and domainName != '' ">
+				domainName=#{domainName},
+			</if>
+			<if test="tel != null and tel != '' ">
+				tel=#{tel},
+			</if>
+			<if test="wishing != null and wishing != ''">
+				wishing=#{wishing},
+			</if>
+			<if test="actName != null and actName != ''">
+				actName=#{actName},
+			</if>
+			<if test="actRemark != null and actRemark != ''">
+				actRemark=#{actRemark},
+			</if>
+			<if test="'lt' != null and 'lt' != '' ">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != '' ">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+</mapper>

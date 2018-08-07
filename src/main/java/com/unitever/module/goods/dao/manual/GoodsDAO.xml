@@ -1,0 +1,703 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.goods.dao.manual.GoodsDAO">
+	<resultMap type="Goods" id="resultGoods">
+		<id column="id" property="id" />
+		<result column="name" property="name" />
+		<result column="goodsCode" property="goodsCode" />
+		<result column="price" property="price" />
+		<result column="salesPrice" property="salesPrice" />
+		<result column="warningUp" property="warningUp" />
+		<result column="warningDown" property="warningDown" />
+		<result column="goodsColor" property="goodsColor" />
+		<result column="goodsSize" property="goodsSize" />
+		<result column="otherAttr" property="otherAttr" />
+		<result column="remark" property="remark" />
+		<result column="isRecommed" property="isRecommed" />
+		<result column="isAbnormal" property="isAbnormal" />
+		<result column="isVisible" property="isVisible" />
+		<result column="isDelete" property="isDelete" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<result column="putOutNumber" property="putOutNumber" />
+		<association property="goods" column="goods_id" select="com.unitever.module.goods.dao.manual.GoodsDAO.get" />
+		<association property="store" column="store_id" select="com.unitever.module.store.dao.manual.StoreDAO.get" />
+		<association property="brand" column="brand_id" select="com.unitever.module.brand.dao.manual.BrandDAO.get" />
+		<association property="goods_inventory" column="id" select="com.unitever.module.inventory.dao.manual.InventoryDAO.getGoodsInventoryByGoodsId" />
+		<association property="buyMoney" column="id" select="com.unitever.module.procurementGoods.dao.manual.ProcurementGoodsDAO.getBuyPriceWithGoodsId" />
+		<association property="buyAgio" column="id" select="com.unitever.module.procurementGoods.dao.manual.ProcurementGoodsDAO.getBuyAgioWithGoodsId" />
+		<association property="specification" column="specification_id" select="com.unitever.module.specification.dao.manual.SpecificationDAO.get" />
+		<association property="classification" column="classification_id" select="com.unitever.module.classification.dao.manual.ClassificationDAO.get" />
+		<collection property="goodsChildList" column="id" select="com.unitever.module.goods.dao.manual.GoodsDAO.getGoodsChildById" />
+		<collection property="imgUrl" column="id" select="com.unitever.platform.component.attachment.dao.manual.AttachmentDAO.getUrlStringListByOwnerId"/>
+	</resultMap>
+
+	<select id="get" resultMap="resultGoods" parameterType="String">
+		select * from th_goods 
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getGoodsByGoodsAttr" resultMap="resultGoods" >
+		select * from th_goods 
+		<where>
+			1=1
+			<if test="goodsId != null and goodsId != ''">
+				and (id=#{goodsId} OR goods_id=#{goodsId})
+			</if>
+			<if test="goodsAttrList != null and goodsAttrList != ''">
+				<foreach item="otherAttr" collection="goodsAttrList">
+					and otherAttr like CONCAT ('%','${otherAttr}','%')
+				</foreach>
+			</if>
+			and isDelete='1'
+		</where>
+		limit 0,1
+	</select>
+
+<!-- 活动分组获取产品级活动主产品备选项列表 -->
+	<select id="getGoodsListWhithProGroup" resultMap="resultGoods">
+		SELECT * 
+		FROM th_goods
+		where isDelete='1'
+			and (goods_id is null or goods_id='')
+			<if test="store_id != null and store_id != ''">
+				AND store_id=#{store_id}
+			</if>
+			<if test="goodsCode != null and goodsCode != ''">
+				and goodsCode like CONCAT('%','${goodsCode}','%')
+			</if>
+			<if test="class_id != null and class_id != ''">
+				and classification_id in (
+					SELECT * 
+					from (
+						(select DISTINCT id from th_classification where id=#{class_id})
+						UNION
+						(SELECT DISTINCT id from th_classification where parentId=#{class_id})
+						UNION
+						(SELECT DISTINCT id from th_classification where parentId in (SELECT id from th_classification where parentId=#{class_id}))
+					) AS CLASS_ID_TABLE
+				)
+			</if>
+	</select>
+
+<!-- 依据QRCodeID获取产品信息 -->
+	<select id="getGoodsByQRCodeID" resultMap="resultGoods">
+		select g.id,g.name,g.goods_id,g.store_id,g.brand_id,g.classification_id,g.marketTime,
+			g.goodsCode,g.price,g.salesPrice,g.warningUp,g.warningDown,g.goodsColor,
+			g.goodsSize,g.otherAttr,g.remark,g.isRecommed,g.isVisible,g.isDelete,g.createTime,g.ft,g.fu,g.lu,g.lt
+		from th_goods g, th_qrcode q 
+		where g.id=q.goods_id
+			and g.isDelete='1'
+			and q.id=#{qRCodeID}
+	</select>
+
+<!-- 获取所有小商品店的产品信息 -->
+	<select id="getAllGaveGoodsList" resultMap="resultGoods" parameterType="String">
+		select * 
+		from th_goods
+		where isDelete='1'
+			and (goods_id is null or goods_id='')
+			and store_id in (
+				select id from th_store where type='3'
+			)
+		 order by createTime desc
+	</select>
+
+<!-- 通过订单OrderCode获取所有可领赠品 -->
+	<select id="getPutOutGoodsListByOrderCode" resultMap="resultGoods" parameterType="String">
+		select goods.*,proLadder.goodsNumber AS putOutNumber
+		from th_goods goods, th_promotion_ladder proLadder
+		where goods.isDelete='1' 
+			and (goods.goods_id is null or goods.goods_id='') 
+			and goods.id=proLadder.goods_id
+			and proLadder.promotion_id in (
+				select id from th_promotion where (type='7' or type='8')
+			)
+			and proLadder.id in (
+				select DISTINCT promotionLadder_id from th_order_subremark where order_id in (
+					SELECT * 
+					from (
+						(select DISTINCT id from th_order where code=#{orderCode})
+						UNION
+						(SELECT DISTINCT id from th_order where order_id in (select DISTINCT id from th_order where code=#{orderCode}))
+					) AS ORDER_ID_TABLE
+				) or orderGoods_id in (
+					select DISTINCT id from th_order_goods where order_id in (
+						SELECT * 
+						from (
+							(select DISTINCT id from th_order where code=#{orderCode})
+							UNION
+							(SELECT DISTINCT id from th_order where order_id in (select DISTINCT id from th_order where code=#{orderCode}))
+						) AS ORDER_ID_TABLE
+					)
+				)
+			)
+		order by createTime desc
+	</select>
+
+<!-- 通过订单OrderCode获取所有可换购商品 -->
+	<select id="getChangeEnoughGoodsListByOrderCode" resultMap="resultGoods" parameterType="String">
+		select goods.*,proLadder.goodsPrice AS putOutNumber, osm.id AS OSM_ID
+		from th_goods goods, th_promotion_ladder proLadder,  th_order_subremark osm
+		where goods.isDelete='1' 
+			and (goods.goods_id is null or goods.goods_id='') 
+			and goods.id=proLadder.goods_id
+			and proLadder.promotion_id in (
+				select id from th_promotion where type='9' and isDelete='1'
+			)
+			and proLadder.id=osm.promotionLadder_id
+			and osm.id in (
+				select DISTINCT id from th_order_subremark where isSendLadder='1' and order_id in (
+					SELECT * 
+					from (
+						(select DISTINCT id from th_order where code=#{orderCode})
+						UNION
+						(SELECT DISTINCT id from th_order where order_id in (select DISTINCT id from th_order where code=#{orderCode}))
+					) AS ORDER_ID_TABLE
+				) or orderGoods_id in (
+					select DISTINCT id from th_order_goods where order_id in (
+						SELECT * 
+						from (
+							(select DISTINCT id from th_order where code=#{orderCode})
+							UNION
+							(SELECT DISTINCT id from th_order where order_id in (select DISTINCT id from th_order where code=#{orderCode}))
+						) AS ORDER_ID_TABLE
+					)
+				)
+			)
+		order by createTime desc
+	</select>
+
+<!-- 根据购物车Id获取异常商品名称 -->
+	<select id="getErroGoodsNameByShoppingCart" resultType="String">
+		select GROUP_CONCAT(name) from th_goods where 
+			id in (select goods_id from th_goods where id in ( select goods_id from th_shoppingcart where 0&lt;INSTR(#{shoppingcartList},id))) 
+			and (isDelete='2' or isVisible='2' or isAbnormal='1')
+	</select>
+	
+<!-- 获取所有主产品 -->
+	<select id="getAllParentGoods" resultMap="resultGoods" parameterType="String">
+		select * from th_goods where isDelete='1' and (goods_id is null or goods_id='') order by createTime desc
+	</select>
+	
+	<select id="getGoodsChildById" resultMap="resultGoods" parameterType="String">
+		select * from th_goods where goods_id=#{id}  and isDelete='1' order by createTime desc
+	</select>
+	
+	<select id="getGoodsChildListByInventoryGoodsId" resultMap="resultGoods" >
+		SELECT * from th_goods where goods_id=#{goodsId} and id in ( select goods_id from th_inventory where storage_id=#{storageId} )
+	</select>
+	
+	<select id="getGoodsForIsRecommed" resultMap="resultGoods" >
+		select * from th_goods where isRecommed = '1' and isDelete='1' and isVisible='1' and isAbnormal='2' and store_id in (select id from th_store where state='1' and type='1') and (goods_id is null or goods_id ='') order by createTime desc
+	</select>
+	
+	<select id="getContByAbnormalGoods" resultType="String" >
+		select count(*) From th_goods where 
+		isDelete='1' and isAbnormal='1' and (goods_id is null or goods_id ='') 
+		<if test="storeId != null and storeId != ''">
+			and store_id in (select id from th_store where id=#{storeId} and state='1')
+		</if>
+		order by createTime desc
+	</select>
+
+<!-- 依据门店获取所有未删除主商品 -->	
+	<select id="getGoodsByStoreId" resultMap="resultGoods" >
+		select * from th_goods where store_id=#{id} and isDelete='1' and (goods_id is null or goods_id='') order by createTime desc
+	</select>
+
+<!-- 依据门店ID和分类Id获取微信端主商品-上架，正常商品，未删除 -->
+	<select id="getWechatGoodsByStoreId" resultMap="resultGoods" >
+		select * from th_goods where 1=1
+		<if test="classId != null and classId != ''">
+			and classification_id=#{classId}
+		</if>
+		<if test="storeId != null and storeId != ''">
+			and store_id in (select id from th_store where id=#{storeId} and state='1')
+		</if>
+		and isDelete='1' and isVisible='1' and isAbnormal='2' and (goods_id is null or goods_id ='') order by createTime desc
+	</select>
+
+	<select id="getAll" resultMap="resultGoods">
+		select * from th_goods where isDelete='1' order by createTime desc
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_goods where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="Goods">
+		insert into
+		th_goods(id,name,specification_id,goods_id,store_id,brand_id,classification_id,marketTime,
+				goodsCode,price,salesPrice,warningUp,warningDown,goodsColor,
+				goodsSize,otherAttr,remark,isRecommed,isAbnormal,isVisible,isDelete,createTime,ft,fu)
+		value(#{id},#{name},#{specification.id},#{goods.id},#{store.id},#{brand.id},#{classification.id},#{marketTime},
+				#{goodsCode},#{price},#{salesPrice},#{warningUp},#{warningDown},#{goodsColor},
+				#{goodsSize},#{otherAttr},#{remark},#{isRecommed},#{isAbnormal},#{isVisible},#{isDelete},#{createTime},#{ft},#{fu})
+	</insert>
+
+	<select id="getCountByClassificationId" resultType="Integer" >
+		select count(*) From th_goods where isDelete='1' and classification_id=#{id}
+	</select>
+
+	<select id="getCountByStoreId" resultType="Integer" >
+		select count(*) From th_goods where isDelete='1' and store_id=#{id}
+	</select>
+
+	<select id="getCountByGoods" resultType="Integer" parameterType="Goods">
+		select count(*) From th_goods
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="name != null and name != ''">
+				and name like CONCAT('%','${name}','%')
+			</if>
+			<if test="specification != null and specification.id != null and specification.id != ''">
+				and specification_id=#{specification.id}
+			</if>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				and goods_id=#{goods.id}
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				and store_id=#{store.id}
+			</if>
+			<if test="brand != null and brand.id != null and brand.id != ''">
+				and brand_id=#{brand.id}
+			</if>
+			<if test="classification != null and classification.id != null and classification.id != ''">
+				and classification_id=#{classification.id}
+			</if>
+			<if test="classification != null and classification.name != null and classification.name != ''">
+				and classification_id in (select id from th_classification where name like CONCAT('%','${classification.name}','%'))
+			</if>
+			<if test="goodsCode != null and goodsCode != ''">
+				and goodsCode=#{goodsCode}
+			</if>
+			<if test="price != null and phone != ''">
+				and price=#{price}
+			</if>
+			<if test="salesPrice != null and salesPrice != ''">
+				and salesPrice=#{salesPrice}
+			</if>
+			<if test="warningUp != null and warningUp != ''">
+				and warningUp=#{warningUp}
+			</if>
+			<if test="warningDown != null and warningDown != ''">
+				and warningDown=#{warningDown}
+			</if>
+			<if test="goodsColor != null and goodsColor != ''">
+				and goodsColor=#{goodsColor}
+			</if>
+			<if test="goodsSize != null and goodsSize != ''">
+				and goodsSize=#{goodsSize}
+			</if>
+			<if test="otherAttr != null and otherAttr != ''">
+				and otherAttr=#{otherAttr}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="isRecommed != null and isRecommed != ''">
+				and isRecommed=#{isRecommed}
+			</if>
+			<if test="isAbnormal != null and isAbnormal != ''">
+				and isAbnormal=#{isAbnormal}
+			</if>
+			<if test="isVisible != null and isVisible != ''">
+				and isVisible=#{isVisible}
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			<if test="marketTime != null and marketTime != ''">
+				and marketTime=#{marketTime}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1' and (goods_id is null or goods_id ='')
+		</where>
+	</select>
+	
+	<select id="getCountByObject" resultType="Integer" parameterType="Goods">
+		select count(*) From th_goods
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="name != null and name != ''">
+				and name like CONCAT('%','${name}','%')
+			</if>
+			<if test="specification != null and specification.id != null and specification.id != ''">
+				and specification_id=#{specification.id}
+			</if>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				and goods_id=#{goods.id}
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				and store_id=#{store.id}
+			</if>
+			<if test="brand != null and brand.id != null and brand.id != ''">
+				and brand_id=#{brand.id}
+			</if>
+			<if test="classification != null and classification.id != null and classification.id != ''">
+				and classification_id=#{classification.id}
+			</if>
+			<if test="classification != null and classification.name != null and classification.name != ''">
+				and classification_id in (select id from th_classification where name like CONCAT('%','${classification.name}','%'))
+			</if>
+			<if test="goodsCode != null and goodsCode != ''">
+				and goodsCode=#{goodsCode}
+			</if>
+			<if test="price != null and phone != ''">
+				and price=#{price}
+			</if>
+			<if test="salesPrice != null and salesPrice != ''">
+				and salesPrice=#{salesPrice}
+			</if>
+			<if test="warningUp != null and warningUp != ''">
+				and warningUp=#{warningUp}
+			</if>
+			<if test="warningDown != null and warningDown != ''">
+				and warningDown=#{warningDown}
+			</if>
+			<if test="goodsColor != null and goodsColor != ''">
+				and goodsColor=#{goodsColor}
+			</if>
+			<if test="goodsSize != null and goodsSize != ''">
+				and goodsSize=#{goodsSize}
+			</if>
+			<if test="otherAttr != null and otherAttr != ''">
+				and otherAttr=#{otherAttr}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="isRecommed != null and isRecommed != ''">
+				and isRecommed=#{isRecommed}
+			</if>
+			<if test="isAbnormal != null and isAbnormal != ''">
+				and isAbnormal=#{isAbnormal}
+			</if>
+			<if test="isVisible != null and isVisible != ''">
+				and isVisible=#{isVisible}
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			<if test="marketTime != null and marketTime != ''">
+				and marketTime=#{marketTime}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1' and (goods_id is null or goods_id ='')
+		</where>
+	</select>
+
+	<select id="getGoodsByGoods" resultMap="resultGoods" parameterType="Goods">
+		select * From th_goods
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="name != null and name != ''">
+				and name like CONCAT('%','${name}','%')
+			</if>
+			<if test="specification != null and specification.id != null and specification.id != ''">
+				and specification_id=#{specification.id}
+			</if>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				and goods_id=#{goods.id}
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				and store_id=#{store.id}
+			</if>
+			<if test="brand != null and brand.id != null and brand.id != ''">
+				and brand_id=#{brand.id}
+			</if>
+			<if test="classification != null and classification.id != null and classification.id != ''">
+				and classification_id=#{classification.id}
+			</if>
+			<if test="classification != null and classification.name != null and classification.name != ''">
+				and classification_id in (select id from th_classification where name like CONCAT('%','${classification.name}','%'))
+			</if>
+			<if test="goodsCode != null and goodsCode != ''">
+				and goodsCode=#{goodsCode}
+			</if>
+			<if test="price != null and phone != ''">
+				and price=#{price}
+			</if>
+			<if test="salesPrice != null and salesPrice != ''">
+				and salesPrice=#{salesPrice}
+			</if>
+			<if test="warningUp != null and warningUp != ''">
+				and warningUp=#{warningUp}
+			</if>
+			<if test="warningDown != null and warningDown != ''">
+				and warningDown=#{warningDown}
+			</if>
+			<if test="goodsColor != null and goodsColor != ''">
+				and goodsColor=#{goodsColor}
+			</if>
+			<if test="goodsSize != null and goodsSize != ''">
+				and goodsSize=#{goodsSize}
+			</if>
+			<if test="otherAttr != null and otherAttr != ''">
+				and otherAttr=#{otherAttr}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="isAbnormal != null and isAbnormal != ''">
+				and isAbnormal=#{isAbnormal}
+			</if>
+			<if test="isVisible != null and isVisible != ''">
+				and isVisible=#{isVisible}
+			</if>
+			<if test="isRecommed != null and isRecommed != ''">
+				and isRecommed=#{isRecommed}
+			</if>
+			<if test="marketTime != null and marketTime != ''">
+				and marketTime=#{marketTime}
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1' and (goods_id is null or goods_id ='')
+		</where>
+		order by createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="Goods">
+		update th_goods
+		<set>
+			<if test="name != null and name != ''">
+				name=#{name},
+			</if>
+			<if test="specification != null and specification.id != null and specification.id != ''">
+				specification_id=#{specification.id},
+			</if>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				goods_id=#{goods.id},
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				store_id=#{store.id},
+			</if>
+			<if test="brand != null and brand.id != null and brand.id != ''">
+				brand_id=#{brand.id},
+			</if>
+			<if test="classification != null and classification.id != null and classification.id != ''">
+				classification_id=#{classification.id},
+			</if>
+			<if test="goodsCode != null and goodsCode != ''">
+				goodsCode=#{goodsCode},
+			</if>
+			<if test="price != null and price != ''">
+				price=#{price},
+			</if>
+			<if test="salesPrice != null and salesPrice != ''">
+				salesPrice=#{salesPrice},
+			</if>
+			<if test="warningUp != null and warningUp != ''">
+				warningUp=#{warningUp},
+			</if>
+			<if test="warningDown != null and warningDown != ''">
+				warningDown=#{warningDown},
+			</if>
+			<if test="goodsColor != null and goodsColor != ''">
+				goodsColor=#{goodsColor},
+			</if>
+			<if test="goodsSize != null and goodsSize != ''">
+				goodsSize=#{goodsSize},
+			</if>
+			<if test="otherAttr != null and otherAttr != ''">
+				otherAttr=#{otherAttr},
+			</if>
+			<if test="remark != null and remark != ''">
+				remark=#{remark},
+			</if>
+			<if test="isAbnormal != null and isAbnormal != ''">
+				isAbnormal=#{isAbnormal},
+			</if>
+			<if test="isVisible != null and isVisible != ''">
+				isVisible=#{isVisible},
+			</if>
+			<if test="isRecommed != null and isRecommed != ''">
+				isRecommed=#{isRecommed},
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				isDelete=#{isDelete},
+			</if>
+			<if test="marketTime != null and marketTime != ''">
+				marketTime=#{marketTime},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+	<update id="deleteAll" parameterType="String">
+		update th_goods
+		<set>
+			isDelete=2,
+		</set>
+		WHERE id=#{id} or goods_id=#{id}
+	</update>
+
+<!--设置当前类别的所有商品异常  -->
+	<update id="abnormalAllByclassificationId" parameterType="String">
+		update th_goods
+		<set>
+			isAbnormal=1,
+		</set>
+		WHERE classification_id=#{id}
+	</update>
+
+	<select id="getGoodsForPage" resultMap="resultGoods" parameterType="String">
+		select * from th_goods
+		<where>
+			1=1
+			<if test="goods.name != null and goods.name != ''">
+				and name like CONCAT('%','${goods.name}','%')
+			</if>
+			<if test="goods.isRecommed != null and goods.isRecommed != ''">
+				and isRecommed=#{goods.isRecommed}
+			</if>
+			<if test="goods.store != null and goods.store.id != null and goods.store.id != ''">
+				and store_id=#{goods.store.id}
+			</if>
+			<if test="goods.classification != null and goods.classification.id != null and goods.classification.id != ''">
+				and classification_id=#{goods.classification.id}
+			</if>
+			and isDelete='1' and isVisible='1' and isAbnormal='2'
+		</where>
+		order by createTime asc limit #{offset},#{limit}
+	</select>
+	
+	<select id="getGoodsListForPage" resultMap="resultGoods" parameterType="String">
+		select * from th_goods
+		<where>
+			1=1
+			and (goods_id is null or goods_id='')
+			<if test="goods.name != null and goods.name != ''">
+				and name like CONCAT('%','${goods.name}','%')
+			</if>
+			<if test="goods.isRecommed != null and goods.isRecommed != ''">
+				and isRecommed=#{goods.isRecommed}
+			</if>
+			<if test="goods.store != null and goods.store.id != null and goods.store.id != ''">
+				and store_id=#{goods.store.id}
+			</if>
+			<if test="classList != null and classList.size() > 0">
+				and classification_id in (
+					SELECT * 
+					from (
+						<foreach collection="classList" item="classId" separator="union">
+							(select DISTINCT id from th_classification where id=#{classId})
+							UNION
+							(SELECT DISTINCT id from th_classification where parentId=#{classId})
+							UNION
+							(SELECT DISTINCT id from th_classification where parentId in (SELECT id from th_classification where parentId=#{classId}))
+						</foreach>
+					) AS CLASS_ID_TABLE
+				)
+			</if>
+			and isDelete='1' and isVisible='1' and isAbnormal='2'
+		</where>
+		order by createTime asc limit #{offset},#{limit}
+	</select>
+
+	<select id="getGoodsCountForIndex" resultType="Integer" parameterType="Goods">
+		select count(*) From th_goods
+		<where>
+			1=1
+			<if test="goods.name != null and goods.name != ''">
+				and name like CONCAT('%','${goods.name}','%')
+			</if>
+			<if test="goods.isRecommed != null and goods.isRecommed != ''">
+				and isRecommed=#{goods.isRecommed}
+			</if>
+			<if test="goods.store != null and goods.store.id != null and goods.store.id != ''">
+				and store_id=#{goods.store.id}
+			</if>
+			<if test="goods.classification != null and goods.classification.id != null and goods.classification.id != ''">
+				and classification_id=#{goods.classification.id}
+			</if>
+			and isDelete='1' and isVisible='1' and isAbnormal='2'
+		</where>
+	</select>
+
+	<select id="getGoodsListCountForIndex" resultType="Integer" parameterType="String">
+		select count(*) from th_goods
+		<where>
+			1=1
+			and (goods_id is null or goods_id='')
+			<if test="goods.name != null and goods.name != ''">
+				and name like CONCAT('%','${goods.name}','%')
+			</if>
+			<if test="goods.isRecommed != null and goods.isRecommed != ''">
+				and isRecommed=#{goods.isRecommed}
+			</if>
+			<if test="goods.store != null and goods.store.id != null and goods.store.id != ''">
+				and store_id=#{goods.store.id}
+			</if>
+			<if test="classList != null and classList.size() > 0">
+				and classification_id in (
+					SELECT * 
+					from (
+						<foreach collection="classList" item="classId" separator="union">
+							(select DISTINCT id from th_classification where id=#{classId})
+							UNION
+							(SELECT DISTINCT id from th_classification where parentId=#{classId})
+							UNION
+							(SELECT DISTINCT id from th_classification where parentId in (SELECT id from th_classification where parentId=#{classId}))
+						</foreach>
+					) AS CLASS_ID_TABLE
+				)
+			</if>
+			and isDelete='1' and isVisible='1' and isAbnormal='2'
+		</where>
+	</select>
+
+<!-- 同时更新主产品和子产品的价格字段-依据子产品更新 -->
+	<update id="updateGoodsAll" parameterType="Goods">
+		update th_goods set price=#{price},salesPrice=#{salesPrice}
+		where id in (
+			SELECT goods_.id from (select goods_id as id from th_goods where id=#{id}) goods_
+		) or goods_id in (
+			SELECT goods_.id from (select goods_id as id from th_goods where id=#{id}) goods_
+		)
+	</update>
+</mapper>

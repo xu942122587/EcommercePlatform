@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.checkstorage.dao.manual.CheckstorageDAO">
+	<resultMap type="Checkstorage" id="resultCheckstorage">
+		<id column="id" property="id" />
+		<result column="code" property="code" />
+		<result column="checkDate" property="checkDate" />
+		<result column="state" property="state" />
+		<result column="remark" property="remark" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="storage" column="storage_id" select="com.unitever.module.storage.dao.manual.StorageDAO.get" />
+		<association property="store" column="store_id" select="com.unitever.module.store.dao.manual.StoreDAO.get" />
+		<association column="fu" property="fu_user" select="com.unitever.auth.user.dao.manual.UserDAO.get" />
+		<collection property="checkstorageGoodsList" column="id" select="com.unitever.module.checkstorageGoods.dao.manual.CheckstorageGoodsDAO.getCheckstorageGoodsListByCheckstorageId"/>
+	</resultMap>
+
+	<select id="get" resultMap="resultCheckstorage" parameterType="String">
+		select * from th_checkstorage
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultCheckstorage">
+		select * from th_checkstorage order by createTime desc
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_checkstorage where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="Checkstorage">
+		insert into
+		th_checkstorage(id,storage_id,store_id,code,checkDate,state,remark,createTime,ft,fu)
+		value(#{id},#{storage.id},#{store.id},#{code},#{checkDate},#{state},#{remark},#{createTime},#{ft},#{fu})
+	</insert>
+
+	<select id="getCountByObject" resultType="Integer" parameterType="Checkstorage">
+		select count(*) From th_checkstorage
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="storage != null and storage.id != null and storage.id != ''">
+				and storage_id=#{storage.id}
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				and store_id=#{store.id}
+			</if>
+			<if test="code != null and code != ''">
+				and code=#{code}
+			</if>
+			<if test="checkDate != null and checkDate != ''">
+				and checkDate=#{checkDate}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+	</select>
+
+	<select id="getCheckstorageByCheckstorage" resultMap="resultCheckstorage" parameterType="Checkstorage">
+		select * From th_checkstorage
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="storage != null and storage.id != null and storage.id != ''">
+				and storage_id=#{storage.id}
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				and store_id=#{store.id}
+			</if>
+			<if test="code != null and code != ''">
+				and code=#{code}
+			</if>
+			<if test="checkDate != null and checkDate != ''">
+				and checkDate=#{checkDate}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+		order by createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="Checkstorage">
+		update th_checkstorage
+		<set>
+			<if test="storage != null and storage.id != null and storage.id != ''">
+				storage_id=#{storage.id},
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				store_id=#{store.id},
+			</if>
+			<if test="code != null and code != ''">
+				code=#{code},
+			</if>
+			<if test="checkDate != null and checkDate != ''">
+				checkDate=#{checkDate},
+			</if>
+			<if test="state != null and state != ''">
+				state=#{state},
+			</if>
+			<if test="remark != null and remark != ''">
+				remark=#{remark},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+</mapper>

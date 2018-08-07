@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.checkstorageGoods.dao.manual.CheckstorageGoodsDAO">
+	<resultMap type="CheckstorageGoods" id="resultCheckstorageGoods">
+		<id column="id" property="id" />
+		<result column="checkNumber" property="checkNumber" />
+		<result column="inventoryNumber" property="inventoryNumber" />
+		<result column="profitNumber" property="profitNumber" />
+		<result column="profitMoney" property="profitMoney" />
+		<result column="state" property="state" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="checkstorage" column="checkstorage_id" select="com.unitever.module.checkstorage.dao.manual.CheckstorageDAO.get" />
+		<association property="goods" column="goods_id" select="com.unitever.module.goods.dao.manual.GoodsDAO.get" />
+	</resultMap>
+
+	<select id="get" resultMap="resultCheckstorageGoods" parameterType="String">
+		select * from th_checkstorage_goods
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+<!-- 依据盘库单Id获取盘库记录 -->
+	<select id="getCheckstorageGoodsListByCheckstorageId" resultMap="resultCheckstorageGoods">
+		select * from th_checkstorage_goods where checkstorage_id=#{checkstorageId} order by createTime desc
+	</select>
+
+	<select id="getAll" resultMap="resultCheckstorageGoods">
+		select * from th_checkstorage_goods order by createTime desc
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_checkstorage_goods where id=#{id} and state != '1';
+	</delete>
+
+	<insert id="save" parameterType="CheckstorageGoods">
+		insert into
+		th_checkstorage_goods(id,checkstorage_id,goods_id,checkNumber,inventoryNumber,profitNumber,profitMoney,state,
+				createTime,ft,fu)
+		value(#{id},#{checkstorage.id},#{goods.id},#{checkNumber},#{inventoryNumber},#{profitNumber},#{profitMoney},#{state},
+				#{createTime},#{ft},#{fu})
+	</insert>
+
+	<select id="getCountByObject" resultType="Integer" parameterType="CheckstorageGoods">
+		select count(*) From th_checkstorage_goods
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="checkstorage != null and checkstorage.id != null and checkstorage.id != ''">
+				and checkstorage_id=#{checkstorage.id}
+			</if>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				and goods_id=#{goods.id}
+			</if>
+			<if test="checkNumber != null and checkNumber != ''">
+				and checkNumber=#{checkNumber}
+			</if>
+			<if test="inventoryNumber != null and inventoryNumber != ''">
+				and inventoryNumber=#{inventoryNumber}
+			</if>
+			<if test="profitNumber != null and profitNumber != ''">
+				and profitNumber=#{profitNumber}
+			</if>
+			<if test="profitMoney != null and profitMoney != ''">
+				and profitMoney=#{profitMoney}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+	</select>
+
+	<select id="getCheckstorageGoodsByCheckstorageGoods" resultMap="resultCheckstorageGoods" parameterType="CheckstorageGoods">
+		select * From th_checkstorage_goods
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="checkstorage != null and checkstorage.id != null and checkstorage.id != ''">
+				and checkstorage_id=#{checkstorage.id}
+			</if>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				and goods_id=#{goods.id}
+			</if>
+			<if test="checkNumber != null and checkNumber != ''">
+				and checkNumber=#{checkNumber}
+			</if>
+			<if test="inventoryNumber != null and inventoryNumber != ''">
+				and inventoryNumber=#{inventoryNumber}
+			</if>
+			<if test="profitNumber != null and profitNumber != ''">
+				and profitNumber=#{profitNumber}
+			</if>
+			<if test="profitMoney != null and profitMoney != ''">
+				and profitMoney=#{profitMoney}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+		</where>
+		order by createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="CheckstorageGoods">
+		update th_checkstorage_goods
+		<set>
+			<if test="checkstorage != null and checkstorage.id != null and checkstorage.id != ''">
+				checkstorage_id=#{checkstorage.id},
+			</if>
+			<if test="goods != null and goods.id != null and goods.id != ''">
+				goods_id=#{goods.id},
+			</if>
+			<if test="checkNumber != null and checkNumber != ''">
+				checkNumber=#{checkNumber},
+			</if>
+			<if test="inventoryNumber != null and inventoryNumber != ''">
+				inventoryNumber=#{inventoryNumber},
+			</if>
+			<if test="profitNumber != null and profitNumber != ''">
+				profitNumber=#{profitNumber},
+			</if>
+			<if test="profitMoney != null and profitMoney != ''">
+				profitMoney=#{profitMoney},
+			</if>
+			<if test="state != null and state != ''">
+				state=#{state},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+</mapper>

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.storeBonus.dao.manual.StoreBonusDAO">
+	<resultMap type="StoreBonus" id="resultStoreBonus">
+		<id column="id" property="id" />
+		<result column="startMoney" property="startMoney" />
+		<result column="proportion" property="proportion" />
+		<result column="remark" property="remark" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+	</resultMap>
+
+	<select id="get" resultMap="resultStoreBonus" parameterType="String">
+		select * from th_store_bonus
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultStoreBonus">
+		select * from th_store_bonus order by createTime desc
+	</select>
+
+	<!-- 根据金额获取提成档位 -->
+	<select id="getProportionByStartMoney" resultMap="resultStoreBonus">
+		select * from th_store_bonus where cast(startMoney AS decimal(38,2))&lt;=cast(#{startMoney} AS decimal(38,2))  order by cast(startMoney AS decimal(38,2)) desc LIMIT 0,1
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_store_bonus where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="StoreBonus">
+		insert into th_store_bonus(id,createTime,ft,fu,startMoney,proportion,remark)
+		value(#{id},#{createTime},#{ft},#{fu},#{startMoney},#{proportion},#{remark})
+	</insert>
+
+	<select id="getCountByStoreBonus" resultType="Integer" parameterType="StoreBonus">
+		select count(*) From th_store_bonus
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="startMoney != null and startMoney != ''">
+				and startMoney=#{startMoney}
+			</if>
+			<if test="proportion != null and proportion != ''">
+				and proportion=#{proportion}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+		</where>
+	</select>
+	
+	<select id="getCountByObject" resultType="Integer" parameterType="StoreBonus">
+		select count(*) From th_store_bonus
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="startMoney != null and startMoney != ''">
+				and startMoney=#{startMoney}
+			</if>
+			<if test="proportion != null and proportion != ''">
+				and proportion=#{proportion}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+		</where>
+	</select>
+
+	<select id="getStoreBonusByStoreBonus" resultMap="resultStoreBonus" parameterType="StoreBonus">
+		select * From th_store_bonus
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="startMoney != null and startMoney != ''">
+				and startMoney=#{startMoney}
+			</if>
+			<if test="proportion != null and proportion != ''">
+				and proportion=#{proportion}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+		</where>
+		order by createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="StoreBonus">
+		update th_store_bonus
+		<set>
+			<if test="startMoney != null and startMoney != ''">
+				startMoney=#{startMoney},
+			</if>
+			<if test="proportion != null and proportion != ''">
+				proportion=#{proportion},
+			</if>
+			<if test="remark != null and remark != ''">
+				remark=#{remark},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+</mapper>

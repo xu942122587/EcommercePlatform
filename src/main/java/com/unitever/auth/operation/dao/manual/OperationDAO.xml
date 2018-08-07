@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.auth.operation.dao.manual.OperationDAO">
+    
+    <resultMap type="operation" id="resultListOperation">  
+        <id column="id" property="id" />
+        <result column="name" property="name"/>  
+        <result column="url" property="url"/>  
+        <result column="code" property="code" />
+        <result column="status" property="status" />
+         <result column="description" property="description" />
+        <association column="functionId" property="parentFunction" select="com.unitever.auth.function.dao.manual.FunctionDAO.get" />
+    </resultMap>
+    
+    <insert id="save" parameterType="operation">
+		insert into auth_operation(id,name,url,code,status,functionId,description)
+		value(#{id},#{name},#{url},#{code},#{status},#{parentFunction.id},#{description})
+	</insert>
+    
+    <!-- 获取一条数据 -->
+    <select id="get" resultMap="resultListOperation">
+     	select * from auth_operation where id=#{id}
+    </select>
+    
+     <!-- 获取一条数据 -->
+    <select id="getOperationsByFuncId" resultMap="resultListOperation">
+     	select * from auth_operation where functionId=#{functionId}
+    </select>
+
+	<!-- 获取一条数据 -->
+    <select id="getAll" resultMap="resultListOperation">
+     	select * from auth_operation
+    </select>
+    <!-- 删除一条数据 -->
+    <delete id="delete">
+        delete from auth_operation where id=#{id}
+    </delete>
+    
+     <!-- 删除一条数据 -->
+    <delete id="deleteByFunctionId">
+        delete from auth_operation where functionId=#{functionId}
+    </delete>
+    
+    <!-- 更新一条数据 -->
+    <update id="update" parameterType="operation">
+        update auth_operation 
+        <set>
+	         <if test="name != null and name != '' ">  
+	            name=#{name},
+	         </if>
+	         <if test="url != null and url != '' ">  
+	            url=#{url},  
+	         </if>
+	         <if test="code != null and code != '' ">  
+	            code=#{code},
+	         </if>
+	         <if test="status != null and status != '' ">  
+	            status=#{status},  
+	         </if>
+	         <if test="description != null and description != '' ">  
+	            description=#{description},  
+	         </if>
+	         <if test="parentFunction != null and parentFunction.id != '' and parentFunction.id != null">
+	            functionId=#{parentFunction.id},
+	         </if>
+        </set>
+         WHERE id=#{id}
+    </update> 
+</mapper>

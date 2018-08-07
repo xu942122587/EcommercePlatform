@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.eticketuseRecord.dao.manual.EticketUseRecordDAO">
+	<resultMap type="EticketUseRecord" id="resultEticketUseRecord">
+		<id column="id" property="id" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="fu" property="ft" />
+		<result column="lt" property="ft" />
+		<result column="lu" property="ft" />
+		<association property="order" column="order_id" select="com.unitever.module.order.dao.manual.OrderDAO.get"/>
+		<association property="eticketOutRecord" column="eticket_out_record_id" select="com.unitever.module.eticketoutRecord.dao.manual.EticketOutRecordDAO.get"/>
+	</resultMap>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_eticket_userecord where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="EticketUseRecord">
+		insert into th_eticket_userecord(id,createTime,order_id,eticket_out_record_id,ft,fu)
+		value(#{id},#{createTime},#{order.id},#{eticketOutRecord.id},#{ft},#{fu})
+	</insert>
+	
+	<select id="get" resultMap="resultEticketUseRecord" parameterType="String">
+		select * from th_eticket_userecord
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+<!-- 获取所有使用记录 -->
+	<select id="getAll" resultMap="resultEticketUseRecord">
+		select * from th_eticket_userecord order by createTime desc
+	</select>
+
+<!-- 获取订单中所有使用记录 -->
+	<select id="getEticketUseListByOrderId" resultMap="resultEticketUseRecord">
+		select * from th_eticket_userecord WHERE order_id=#{id} order by createTime desc
+	</select>
+
+<!-- 依据订单ID获取使用记录 -->
+	<select id="getOrderUseEticketListByOrderId" resultMap="resultEticketUseRecord">
+		select * from th_eticket_userecord where order_id=#{orderId} order by createTime desc
+	</select>
+
+	<select id="getUseRecordByUseRecord" resultMap="resultEticketUseRecord" parameterType="EticketUseRecord">
+		select * From th_eticket_userecord
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="createTime != null and createTime != ''">
+				and createTime=#{createTime}
+			</if>
+			<if test="order != null and order.id != null and order.id != ''">
+				and order_id=#{order.id}
+			</if>
+			<if test="eticketOutRecord != null and eticketOutRecord.id != null and eticketOutRecord.id != ''">
+				and eticket_out_record_id=#{eticketOutRecord.id}
+			</if>
+		</where>
+		order by createTime desc
+	</select>
+
+	<update id="update" parameterType="EticketUseRecord">
+		update th_eticket_userecord
+		<set>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="order != null and order.id != null and order.id != ''">
+				order_id=#{order.id},
+			</if>
+			<if test="eticketOutRecord != null and eticketOutRecord.id != null and eticketOutRecord.id != ''">
+				eticket_out_record_id=#{eticketOutRecord.id},
+			</if>
+			<if test="'lt' != null and 'lt' != ''" >lt=#{lt},</if>
+			<if test="lu != null and lu != ''">lu=#{lu},</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+</mapper>

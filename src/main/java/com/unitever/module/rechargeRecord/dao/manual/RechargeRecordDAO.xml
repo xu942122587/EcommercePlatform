@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.rechargeRecord.dao.manual.RechargeRecordDAO">
+	<resultMap type="RechargeRecord" id="resultRechargeRecord">
+		<id column="id" property="id" />
+		<result column="state" property="state" />
+		<result column="backCash" property="backCash" />
+		<result column="money" property="money" />
+		<result column="payType" property="payType" />
+		<result column="payCode" property="payCode" />
+		<result column="payTime" property="payTime" />
+		<result column="cashierCode" property="cashierCode" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association column="guideUser_id" property="guideUser" select="com.unitever.auth.user.dao.manual.UserDAO.get" />
+		<association column="customer_id" property="customer" select="com.unitever.module.customer.dao.manual.CustomerDAO.get" />
+		<association property="cashierUser" column="cashierUser_id" select="com.unitever.auth.user.dao.manual.UserDAO.get" />
+	</resultMap>
+
+	<select id="get" resultMap="resultRechargeRecord" parameterType="String">
+		select * from th_recharge_record
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultRechargeRecord">
+		select * from th_recharge_record order by createTime desc
+	</select>
+
+<!-- 充值金额统计 -->
+	<select id="getRechargeSumMoney" resultType="String">
+		SELECT IFNULL(ROUND(SUM(money),2),0)
+		from th_recharge_record
+		where payTime&gt;=#{startDate}
+			and payTime&lt;=#{endDate}
+			and state='1'
+	</select>
+<!-- 充值返现金额统计 -->
+	<select id="getRechargeBackCashSumMoney" resultType="String">
+		SELECT IFNULL(ROUND(SUM(backCash),2),0)
+		from th_recharge_record
+		where payTime&gt;=#{startDate}
+			and payTime&lt;=#{endDate}
+			and state='1'
+	</select>
+	
+<!-- 交接班-充值记录统计 -->
+	<select id="getRechargeCountMap" resultType="java.util.Map">
+		SELECT payType,
+			COUNT(*) as number,
+			ROUND(SUM(money),2) as money
+		from th_recharge_record
+		where  cashierUser_id=#{cashierUser_id}
+			and (cashierCode is not null or cashierCode!='')
+			and payTime&gt;=#{start_time}
+			and payTime&lt;=#{end_time}
+			and state='1'
+		GROUP BY payType
+	</select>
+	
+	<!-- 根据导购获取上月的充值总金额 -->
+	<select id="getRechargeRecordByGuideUserInLastMonth" resultType="String">
+		select ROUND(SUM(money),2) from th_recharge_record where guideUser_id=#{guideUserId} and state='1'
+		and createTime&gt;=(select date_sub(date_sub(date_format(now(),'%y-%m-%d'),interval extract(day from now())-1 day),interval 1 month))
+		and createTime&lt;=(select date_sub(date_sub(date_format(now(),'%y-%m-%d'),interval extract(day from now()) day),interval 0 month) as date)
+	</select>
+	
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_recharge_record where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="RechargeRecord">
+		insert into th_recharge_record(id,state,backCash,createTime,ft,fu,money,payType,cashierUser_id,cashierCode,customer_id,guideUser_id,payCode,payTime)
+		value(#{id},#{state},#{backCash},#{createTime},#{ft},#{fu},#{money},#{payType},#{cashierUser.id},#{cashierCode},#{customer.id},#{guideUser.id},#{payCode},#{payTime})
+	</insert>
+
+	<select id="getCountByRechargeRecord" resultType="Integer" parameterType="RechargeRecord">
+		select count(*) From th_recharge_record
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id like CONCAT('%','${id}','%')
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				and guideUser_id=#{guideUser.id}
+			</if>
+			<if test="cashierUser != null and cashierUser.id != null and cashierUser.id != ''">
+				and cashierUser_id=#{cashierUser.id}
+			</if>
+			<if test="cashierCode != null and cashierCode != ''">
+				and cashierCode=#{cashierCode}
+			</if>
+			<if test="backCash != null and backCash != ''">
+				and backCash=#{backCash}
+			</if>
+			<if test="money != null and money != ''">
+				and money=#{money}
+			</if>
+			<if test="payCode != null and payCode != ''">
+				and payCode=#{payCode}
+			</if>
+			
+				and (payType='3' or payType='4')
+				
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and state='1'
+		</where>
+	</select>
+	
+	<select id="getCountByObject" resultType="Integer" parameterType="RechargeRecord">
+		select count(*) From th_recharge_record
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				and guideUser_id=#{guideUser.id}
+			</if>
+			<if test="cashierUser != null and cashierUser.id != null and cashierUser.id != ''">
+				and cashierUser_id=#{cashierUser.id}
+			</if>
+			<if test="cashierCode != null and cashierCode != ''">
+				and cashierCode=#{cashierCode}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="backCash != null and backCash != ''">
+				and backCash=#{backCash}
+			</if>
+			<if test="money != null and money != ''">
+				and money=#{money}
+			</if>
+			<if test="payCode != null and payCode != ''">
+				and payCode=#{payCode}
+			</if>
+			<if test="payType != null and payType != ''">
+				and payType=#{payType}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and state='1'
+		</where>
+	</select>
+
+	<select id="getRechargeRecordByRechargeRecord" resultMap="resultRechargeRecord" parameterType="RechargeRecord">
+		select * From th_recharge_record
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				and guideUser_id=#{guideUser.id}
+			</if>
+			<if test="cashierUser != null and cashierUser.id != null and cashierUser.id != ''">
+				and cashierUser_id=#{cashierUser.id}
+			</if>
+			<if test="customer != null and customer.id != null and customer.id != ''">
+				and customer_id=#{customer.id}
+			</if>
+			<if test="customer != null and customer.phone != null and customer.phone != ''">
+				and customer_id in (select id from th_customer where phone=#{customer.phone})
+			</if>
+			<if test="cashierCode != null and cashierCode != ''">
+				and cashierCode=#{cashierCode}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="backCash != null and backCash != ''">
+				and backCash=#{backCash}
+			</if>
+			<if test="money != null and money != ''">
+				and money=#{money}
+			</if>
+			<if test="payCode != null and payCode != ''">
+				and payCode=#{payCode}
+			</if>
+			<if test="payType != null and payType != ''">
+				and payType=#{payType}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and state='1'
+		</where>
+		order by payTime
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+	<!-- 根据支付方式获取充值记录 -->
+	<select id="getRechargeRecordByPayType" resultMap="resultRechargeRecord" parameterType="RechargeRecord">
+		select * From th_recharge_record
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id like CONCAT('%','${id}','%')
+			</if>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				and guideUser_id=#{guideUser.id}
+			</if>
+			<if test="cashierUser != null and cashierUser.id != null and cashierUser.id != ''">
+				and cashierUser_id=#{cashierUser.id}
+			</if>
+			<if test="cashierCode != null and cashierCode != ''">
+				and cashierCode=#{cashierCode}
+			</if>
+			<if test="backCash != null and backCash != ''">
+				and backCash=#{backCash}
+			</if>
+			<if test="money != null and money != ''">
+				and money=#{money}
+			</if>
+			<if test="payCode != null and payCode != ''">
+				and payCode=#{payCode}
+			</if>
+			
+				and (payType='3' or payType='4')
+				
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and state='1'
+		</where>
+		order by payTime
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="RechargeRecord">
+		update th_recharge_record
+		<set>
+			<if test="guideUser != null and guideUser.id != null and guideUser.id != ''">
+				guideUser_id=#{guideUser.id},
+			</if>
+			<if test="cashierUser != null and cashierUser.id != null and cashierUser.id != ''">
+				cashierUser_id=#{cashierUser.id},
+			</if>
+			<if test="cashierCode != null and cashierCode != ''">
+				cashierCode=#{cashierCode},
+			</if>
+			<if test="state != null and state != ''">
+				state=#{state},
+			</if>
+			<if test="backCash != null and backCash != ''">
+				backCash=#{backCash},
+			</if>
+			<if test="money != null and money != ''">
+				money=#{money},
+			</if>
+			<if test="payType != null and payType != ''">
+				payType=#{payType},
+			</if>
+			<if test="payCode != null and payCode != ''">
+				payCode=#{payCode},
+			</if>
+			<if test="payTime != null and payTime != ''">
+				payTime=#{payTime},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+	
+	<update id="updatePay" parameterType="RechargeRecord">
+		update th_recharge_record
+		<set>
+			state='1',
+			payType=#{payType},
+			payTime=now(),
+			<if test="payCode != null and payCode != ''">
+				payCode=#{payCode},
+			</if>
+		</set>
+		WHERE id=#{id} and state='2'
+	</update>
+</mapper>

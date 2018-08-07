@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.statistics.dao.manual.OrderStatisticsDAO">
+	<resultMap type="Order" id="resultOrder">
+		<id column="id" property="id" />
+		<result column="code" property="code" />
+		<result column="type" property="type" />
+		<result column="payTime" property="payTime" />
+		<result column="reserveName" property="reserveName" />
+		<result column="reservePhone" property="reservePhone" />
+		<result column="reserveTime" property="reserveTime" />
+		<result column="reserveMoney" property="reserveMoney" />
+		<result column="lestMoney" property="lestMoney" />
+		<result column="state" property="state" />
+		<result column="sumMoney" property="sumMoney" />
+		<result column="sumNumber" property="sumNumber" />
+		<result column="eticketMoney" property="eticketMoney" />
+		<result column="subMoney" property="subMoney" />
+		<result column="cashierCode" property="cashierCode" />
+		<result column="payType" property="payType" />
+		<result column="leaveMessage" property="leaveMessage" />
+		<result column="receiverName" property="receiverName" />
+		<result column="receiverAddress" property="receiverAddress" />
+		<result column="receiverPhone" property="receiverPhone" />
+		<result column="expressName" property="expressName" />
+		<result column="expressPhone" property="expressPhone" />
+		<result column="proType" property="proType" />
+		<result column="inLinePayMoney" property="inLinePayMoney" />
+		<result column="payMoney" property="payMoney" />
+		<result column="subUserType" property="subUserType" />
+		<result column="oneReturnMoney" property="oneReturnMoney" />
+		<result column="onePayMoney" property="onePayMoney" />
+		<result column="onePayType" property="onePayType" />
+		<result column="onePayCode" property="onePayCode" />
+		<result column="twoPayMoney" property="twoPayMoney" />
+		<result column="twoPayType" property="twoPayType" />
+		<result column="twoPayCode" property="twoPayCode" />
+		<result column="twoPayTime" property="twoPayTime" />
+		<result column="twoCashierCode" property="twoCashierCode" />
+		<result column="twoReturnMoney" property="twoReturnMoney" />
+		<result column="returnMoney" property="returnMoney" />
+		<result column="returnWeChatPay" property="returnWeChatPay" />
+		<result column="returnAliPay" property="returnAliPay" />
+		<result column="returnCard" property="returnCard" />
+		<result column="returnTianhe" property="returnTianhe" />
+		<result column="remark" property="remark" />
+		<result column="batchCode" property="batchCode" />
+		<result column="postage" property="postage" />
+		<result column="logistics" property="logistics" />
+		<result column="logisticsCode" property="logisticsCode" />
+		<result column="isHide" property="isHide" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="customer" column="customer_id" select="com.unitever.module.customer.dao.manual.CustomerDAO.get" />
+		<association property="store" column="store_id" select="com.unitever.module.store.dao.manual.StoreDAO.get" />
+		<association property="order" column="order_id" select="com.unitever.module.order.dao.manual.OrderDAO.get" />
+		<association property="cashierUser" column="cashierUser_id" select="com.unitever.auth.user.dao.manual.UserDAO.get" />
+		<association property="guideUser" column="guideUser_id" select="com.unitever.auth.user.dao.manual.UserDAO.get" />
+		<association column="twoCashierUser_id" property="twoCashierUser" select="com.unitever.auth.user.dao.manual.UserDAO.get" />
+		<association column="id" property="qrcodeCount" select="com.unitever.module.orderGoodsQrcode.dao.manual.OrderGoodsQrcodeDAO.getCountQrcodeByOrderId" />
+		<collection property="orderList" column="id" select="com.unitever.module.order.dao.manual.OrderDAO.getOrderListByParentOrderId"/>
+		<collection property="orderGoodList" column="id" select="com.unitever.module.orderGoods.dao.manual.OrderGoodsDAO.getAllByOrderId"/>
+		<collection property="orderSubremarkList" column="id" select="com.unitever.module.orderSubremark.dao.manual.OrderSubremarkDAO.getAllByChildOrderId"/>
+		<collection property="eticketUseRecordList" column="id" select="com.unitever.module.eticketuseRecord.dao.manual.EticketUseRecordDAO.getEticketUseListByOrderId"/>
+	</resultMap>
+	
+	<!-- 线下-现金首次支付统计 -->
+	<select id="getMoneyPayOneSumMoney" resultType="String">
+		SELECT IFNULL(ROUND(SUM(onePayMoney),2),0)
+		from th_order
+		where 
+			onePayType='1'
+		 	and payTime&gt;=#{startDate}
+			and payTime&lt;=#{endDate}
+			and (proType is null or proType='')
+			and type!='5'
+			and type!='4'
+			and type!='1'
+			and type!='7'
+			<if test="storeId != null and storeId != ''">
+				and store_id=#{storeId}
+			</if>
+	</select>
+	
+	<!-- 线下-银行卡首次支付统计 -->
+	<select id="getCardPayOneSumMoney" resultType="String">
+		SELECT IFNULL(ROUND(SUM(onePayMoney),2),0)
+		from th_order
+		where 
+			onePayType='2'
+		 	and payTime&gt;=#{startDate}
+			and payTime&lt;=#{endDate}
+			and (proType is null or proType='')
+			and type!='5'
+			and type!='4'
+			and type!='1'
+			and type!='7'
+			<if test="storeId != null and storeId != ''">
+				and store_id=#{storeId}
+			</if>
+	</select>
+	
+	<!-- 线下-微信首次支付统计 -->
+	<select id="getWeChatPayOneSumMoney" resultType="String">
+		SELECT IFNULL(ROUND(SUM(onePayMoney),2),0)
+		from th_order
+		where 
+			onePayType='3'
+		 	and payTime&gt;=#{startDate}
+			and payTime&lt;=#{endDate}
+			and (proType is null or proType='')
+			and type!='5'
+			and type!='4'
+			and type!='1'
+			and type!='7'
+			<if test="storeId != null and storeId != ''">
+				and store_id=#{storeId}
+			</if>
+	</select>
+	
+	<!-- 线下-支付宝首次支付统计 -->
+	<select id="getAliPayOneSumMoney" resultType="String">
+		SELECT IFNULL(ROUND(SUM(onePayMoney),2),0)
+		from th_order
+		where 
+			onePayType='4'
+		 	and payTime&gt;=#{startDate}
+			and payTime&lt;=#{endDate}
+			and (proType is null or proType='')
+			and type!='5'
+			and type!='4'
+			and type!='1'
+			and type!='7'
+			<if test="storeId != null and storeId != ''">
+				and store_id=#{storeId}
+			</if>
+	</select>
+	
+	<!-- 线下-余额首次支付统计 -->
+	<select id="getTianhePayOneSumMoney" resultType="String">
+		SELECT IFNULL(ROUND(SUM(onePayMoney),2),0)
+		from th_order
+		where 
+			onePayType='5'
+		 	and payTime&gt;=#{startDate}
+			and payTime&lt;=#{endDate}
+			and (proType is null or proType='')
+			and type!='5'
+			and type!='4'
+			and type!='1'
+			and type!='7'
+			<if test="storeId != null and storeId != ''">
+				and store_id=#{storeId}
+			</if>
+	</select>
+	
+	<!-- 线下-预约定金总计 -->
+	<select id="getDingjinSumMoney" resultType="String">
+		SELECT IFNULL(ROUND(SUM(onePayMoney),2),0)
+		from th_order
+		where 
+			payTime&gt;=#{startDate}
+			and payTime&lt;=#{endDate}
+			and (proType is null or proType='')
+			and type='4'
+			<if test="storeId != null and storeId != ''">
+				and store_id=#{storeId}
+			</if>
+	</select>
+	
+	<!-- 线下-预约尾款总计 -->
+	<select id="getWeikuanSumMoney" resultType="String">
+		SELECT IFNULL(ROUND(SUM(twoPayMoney),2),0)
+		from th_order
+		where twoPayTime&gt;=#{startDate}
+			and twoPayTime&lt;=#{endDate}
+			and (twoCashierCode is not null or twoCashierCode!='')
+			and (proType is null or proType='')
+			and type='4'
+			<if test="storeId != null and storeId != ''">
+				and store_id=#{storeId}
+			</if>
+	</select>
+	
+	<!-- 线上-微信首次支付统计 -->
+	<select id="getWeChatPayOneSumMoneyInLine" resultType="String">
+		SELECT IFNULL(ROUND(SUM(onePayMoney),2),0)
+		from th_order
+		where 
+			onePayType='3'
+		 	and payTime&gt;=#{startDate}
+			and payTime&lt;=#{endDate}
+			and (proType is null or proType='')
+			and type='1'
+			<if test="storeId != null and storeId != ''">
+				and store_id=#{storeId}
+			</if>
+	</select>
+	
+	<!-- 线上-支付宝首次支付统计 -->
+	<select id="getAliPayOneSumMoneyInLine" resultType="String">
+		SELECT IFNULL(ROUND(SUM(onePayMoney),2),0)
+		from th_order
+		where 
+			onePayType='4'
+		 	and payTime&gt;=#{startDate}
+			and payTime&lt;=#{endDate}
+			and (proType is null or proType='')
+			and type='1'
+			<if test="storeId != null and storeId != ''">
+				and store_id=#{storeId}
+			</if>
+	</select>
+	
+	<!-- 线上-余额首次支付统计 -->
+	<select id="getTianhePayOneSumMoneyInLine" resultType="String">
+		SELECT IFNULL(ROUND(SUM(onePayMoney),2),0)
+		from th_order
+		where 
+			onePayType='5'
+		 	and payTime&gt;=#{startDate}
+			and payTime&lt;=#{endDate}
+			and (proType is null or proType='')
+			and type='1'
+			<if test="storeId != null and storeId != ''">
+				and store_id=#{storeId}
+			</if>
+	</select>
+	
+	<!--退款总计 -->
+	<select id="getReturnSumMoney" resultType="String">
+		SELECT IFNULL(ROUND(SUM(onePayMoney),2),0)
+		from th_order
+		where
+			payTime&gt;=#{startDate}
+			and payTime&lt;=#{endDate}
+			and (proType is null or proType='')
+			and type='5'
+			<if test="storeId != null and storeId != ''">
+				and store_id=#{storeId}
+			</if>
+	</select>
+	
+	<!-- 门店销售额 -->
+	<select id="getSumMoneyOneMap" resultType="java.util.Map">
+		SELECT store.storeCode as storeCode,
+			store.name as storeName,
+			ROUND(SUM(IFNULL(onePayMoney,0)),2) as oneSumMoney
+		from th_order order_,
+			th_store store
+		where store.id=order_.store_id
+		 	and order_.payTime&gt;=#{startDate}
+			and order_.payTime&lt;=#{endDate}
+			and (order_.proType is null or order_.proType='')
+			and order_.type!='5'
+			and order_.type!='4'
+			and order_.type!='7'
+			and store.type!='2'
+		GROUP BY store.storeCode
+		ORDER BY CAST(ROUND(SUM(IFNULL(onePayMoney,0)),2) AS DECIMAL(38,2)) desc
+	</select>
+	
+	<!--预约商品实际销量排名 -->
+	<select id="getSumMoneyOneList" resultType="String">
+		SELECT store.storeCode as storeCode
+		from th_order order_,
+			th_store store
+		where store.id=order_.store_id
+		 	and order_.payTime&gt;=#{startDate}
+			and order_.payTime&lt;=#{endDate}
+			and (order_.proType is null or order_.proType='')
+			and order_.type!='5'
+			and order_.type!='4'
+			and order_.type!='7'
+			and store.type!='2'
+		GROUP BY store.storeCode
+		ORDER BY CAST(ROUND(SUM(IFNULL(onePayMoney,0)),2) AS DECIMAL(38,2)) desc
+	</select>
+	
+	<!--线下-销售数量总计-->
+	<select id="getSaleSumNumber" resultType="String">
+		SELECT IFNULL(ROUND(SUM(sumNumber),0),0)
+		from th_order
+		where
+			payTime&gt;=#{startDate}
+			and payTime&lt;=#{endDate}
+			and (proType is null or proType='')
+			and type='2'
+			<if test="storeId != null and storeId != ''">
+				and store_id=#{storeId}
+			</if>
+	</select>
+	
+	<!--线下-预约销售数量总计-->
+	<select id="getForTypeSaleSumNumber" resultType="String">
+		SELECT IFNULL(ROUND(SUM(sumNumber),0),0)
+		from th_order
+		where
+			twoPayTime&gt;=#{startDate}
+			and twoPayTime&lt;=#{endDate}
+			and (proType is null or proType='')
+			and type='4'
+			<if test="storeId != null and storeId != ''">
+				and store_id=#{storeId}
+			</if>
+	</select>
+	
+	<!--线上-销售数量总计 -->
+	<select id="getSaleSumNumberInLine" resultType="String">
+		SELECT IFNULL(ROUND(SUM(sumNumber),0),0)
+		from th_order
+		where
+			payTime&gt;=#{startDate}
+			and payTime&lt;=#{endDate}
+			and (proType is null or proType='')
+			and type='1'
+			<if test="storeId != null and storeId != ''">
+				and store_id=#{storeId}
+			</if>
+	</select>
+	
+	<!--退货数量总计 -->
+	<select id="getReturnSumNumber" resultType="String">
+		SELECT IFNULL(abs(ROUND(SUM(sumNumber),0)),0)
+		from th_order
+		where
+			payTime&gt;=#{startDate}
+			and payTime&lt;=#{endDate}
+			and (proType is null or proType='')
+			and type='5'
+			and state='6'
+			<if test="storeId != null and storeId != ''">
+				and store_id=#{storeId}
+			</if>
+	</select>
+	
+	<!--商品实际销量排名 -->
+	<select id="getGoodsGroupOrderBySumCount" resultType="java.util.Map">
+		SELECT store.storeCode,store.`name` as storeName,
+			pGoods.name as goodsName,
+			pGoods.goodsCode as goodsCode,
+			ROUND(SUM(IF(order_Goods.type='1',order_Goods.count,-order_Goods.count)),0) sumCount,
+			ROUND(SUM(IF(order_Goods.type='1',order_Goods.count,0)),0) saleCount,
+			ROUND(SUM(IF(order_Goods.type='2',order_Goods.count,0)),0) returnCount
+			from th_order ord,th_order pOrder ,th_order_goods order_Goods,th_store store,th_goods goods,th_goods pGoods
+			where ord.id=order_Goods.order_id and ord.order_id=pOrder.id 
+			and store.id=pOrder.store_id and order_Goods.goods_id=goods.id and goods.goods_id=pGoods.id
+			and pOrder.payTime&lt;=#{endDate} and pOrder.payTime&gt;=#{startDate} and pOrder.type!='4'
+			<if test="storeId != null and storeId != ''">
+				and pOrder.store_id=#{storeId}
+			</if>
+			GROUP BY pGoods.id ORDER BY sumCount desc limit 0,10
+	</select>
+	<!--商品实际销量排名 -->
+	<select id="getGoodsGroupOrderBySumCountList" resultType="String">
+		SELECT
+			pGoods.goodsCode as goodsCode
+			from th_order ord,th_order pOrder ,th_order_goods order_Goods,th_store store,th_goods goods,th_goods pGoods
+			where ord.id=order_Goods.order_id and ord.order_id=pOrder.id 
+			and store.id=pOrder.store_id and order_Goods.goods_id=goods.id and goods.goods_id=pGoods.id
+			and pOrder.payTime&lt;=#{endDate} and pOrder.payTime&gt;=#{startDate} and pOrder.type!='4'
+			<if test="storeId != null and storeId != ''">
+				and pOrder.store_id=#{storeId}
+			</if>
+			GROUP BY pGoods.id ORDER BY ROUND(SUM(IF(order_Goods.type='1',order_Goods.count,-order_Goods.count)),0) desc limit 0,10
+	</select>
+	
+	<!--预约商品实际销量排名 -->
+	<select id="getGoodsGroupOrderBySumCountForTypeFour" resultType="java.util.Map">
+		SELECT store.storeCode,store.`name` as storeName,
+			pGoods.name as goodsName,
+			pGoods.goodsCode as goodsCode,
+			ROUND(SUM(IF(order_Goods.type='1',order_Goods.count,-order_Goods.count)),0) sumCount,
+			ROUND(SUM(IF(order_Goods.type='1',order_Goods.count,0)),0) saleCount,
+			ROUND(SUM(IF(order_Goods.type='2',order_Goods.count,0)),0) returnCount
+			from th_order ord,th_order pOrder ,th_order_goods order_Goods,th_store store,th_goods goods,th_goods pGoods
+			where ord.id=order_Goods.order_id and ord.order_id=pOrder.id 
+			and store.id=pOrder.store_id and order_Goods.goods_id=goods.id and goods.goods_id=pGoods.id
+			and pOrder.payTime&lt;=#{endDate} and pOrder.payTime&gt;=#{startDate} and pOrder.type='4'
+			and pOrder.twoPayTime is not null and pOrder.twoPayTime!=''
+			<if test="storeId != null and storeId != ''">
+				and pOrder.store_id=#{storeId}
+			</if>
+			and pOrder.state='6' and (pOrder.cashierCode is not null and pOrder.cashierCode!='')
+			GROUP BY pGoods.id ORDER BY sumCount desc limit 0,10
+	</select>
+	
+	<!--预约商品实际销量排名 -->
+	<select id="getGoodsGroupOrderBySumCountForTypeFourList" resultType="String">
+		SELECT
+			pGoods.goodsCode as goodsCode
+			from th_order ord,th_order pOrder ,th_order_goods order_Goods,th_store store,th_goods goods,th_goods pGoods
+			where ord.id=order_Goods.order_id and ord.order_id=pOrder.id 
+			and store.id=pOrder.store_id and order_Goods.goods_id=goods.id and goods.goods_id=pGoods.id
+			and pOrder.payTime&lt;=#{endDate} and pOrder.payTime&gt;=#{startDate} and pOrder.type='4'
+			and pOrder.twoPayTime is not null and pOrder.twoPayTime!=''
+			<if test="storeId != null and storeId != ''">
+				and pOrder.store_id=#{storeId}
+			</if>
+			and pOrder.state='6' and (pOrder.cashierCode is not null and pOrder.cashierCode!='')
+			GROUP BY pGoods.id ORDER BY ROUND(SUM(IF(order_Goods.type='1',order_Goods.count,-order_Goods.count)),0) desc limit 0,10
+	</select>
+	
+</mapper>

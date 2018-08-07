@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.unitever.module.procurement.dao.manual.ProcurementDAO">
+	<resultMap type="Procurement" id="resultProcurement">
+		<id column="id" property="id" />
+		<result column="type" property="type" />
+		<result column="procurementCode" property="procurementCode" />
+		<result column="count" property="count" />
+		<result column="sumMoney" property="sumMoney" />
+		<result column="state" property="state" />
+		<result column="procurementDate" property="procurementDate" />
+		<result column="remark" property="remark" />
+		<result column="checkRemark" property="checkRemark" />
+		<result column="isDelete" property="isDelete" />
+		<result column="shipType" property="shipType" />
+		<result column="createTime" property="createTime" />
+		<result column="ft" property="ft" />
+		<result column="lt" property="lt" />
+		<result column="fu" property="fu" />
+		<result column="lu" property="lu" />
+		<association property="vende" column="vende_id" select="com.unitever.module.vende.dao.manual.VendeDAO.get" />
+		<association property="fu_string" column="fu" select="com.unitever.auth.user.dao.manual.UserDAO.getNameById" />
+		<association property="user" column="user_id" select="com.unitever.auth.user.dao.manual.UserDAO.get" />
+		<association property="store" column="store_id" select="com.unitever.module.store.dao.manual.StoreDAO.get" />
+		<collection property="procurementGoodsList" column="id" select="com.unitever.module.procurementGoods.dao.manual.ProcurementGoodsDAO.getProcurementGoodsListByProcurementId"/>
+	</resultMap>
+
+	<select id="get" resultMap="resultProcurement" parameterType="String">
+		select * from th_procurement
+		<where>
+			id=#{id}
+		</where>
+	</select>
+
+	<select id="getAll" resultMap="resultProcurement">
+		select * from th_procurement where isDelete='1' order by createTime desc
+	</select>
+
+	<!-- 门店采购统计 -->
+	<select id="getOneTypeSumMoneyAndCountMap" resultType="java.util.Map">
+		select sto.name as name,sto.storeCode as storeCode,pro.store_id as storeId ,IFNULL(ROUND(SUM(buySumMoney),2),0) as buySumMoney,
+			IFNULL(ROUND(SUM(buyCount),0),0) as buyCount,pro.type as type
+			From th_procurement pro,th_store sto
+			where pro.store_id=sto.id
+			and pro.state='4' and pro.type='1' 
+			and pro.procurementDate&gt;=#{startDate} and pro.procurementDate&lt;=#{endDate}
+			GROUP BY pro.store_id
+	</select>
+	
+	<!-- 门店采购退货统计 -->
+	<select id="getTwoTypeSumMoneyAndCountMap" resultType="java.util.Map">
+		select sto.name as name,sto.storeCode as storeCode,pro.store_id as storeId ,IFNULL(ROUND(SUM(buySumMoney),2),0)  as buySumMoney,
+			IFNULL(ROUND(SUM(buyCount),0),0) as buyCount,pro.type as type
+			From th_procurement pro,th_store sto
+			where pro.store_id=sto.id
+			and pro.state='4' and pro.type='2' 
+			and pro.procurementDate&gt;=#{startDate} and pro.procurementDate&lt;=#{endDate}
+			GROUP BY pro.store_id
+	</select>
+
+<!-- 依据订单Code获取采购单 -->
+	<select id="getProcurementByProCode" resultMap="resultProcurement">
+		select * from th_procurement where procurementCode=#{proCode} and isDelete='1' order by createTime desc limit 0,1
+	</select>
+
+	<!-- 删除一条数据 -->
+	<delete id="delete" parameterType="String">
+		delete from th_procurement where id=#{id};
+	</delete>
+
+	<insert id="save" parameterType="Procurement">
+		insert into
+		th_procurement(id,type,vende_id,procurementCode,count,sumMoney,state,user_id,procurementDate,
+				buyCount,buySumMoney,
+				remark,createTime,ft,fu,isDelete,shipType,store_id,checkRemark)
+		value(#{id},#{type},#{vende.id},#{procurementCode},#{count},#{sumMoney},#{state},#{user.id},#{procurementDate},
+				#{buyCount},#{buySumMoney},
+				#{remark},#{createTime},#{ft},#{fu},#{isDelete},#{shipType},#{store.id},#{checkRemark})
+	</insert>
+
+	<select id="getCountByProcurement" resultType="Integer" parameterType="Procurement">
+		select count(*) From th_procurement
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="type != null and type != ''">
+				and type=#{type}
+			</if>
+			<if test="vende != null and vende.id != null and vende.id != ''">
+				and vende_id=#{vende.id}
+			</if>
+			<if test="procurementCode != null and procurementCode != ''">
+				and procurementCode=#{procurementCode}
+			</if>
+			<if test="count != null and count != ''">
+				and count=#{count}
+			</if>
+			<if test="sumMoney != null and sumMoney != ''">
+				and sumMoney=#{sumMoney}
+			</if>
+			<if test="buyCount != null and buyCount != ''">
+				and buyCount=#{buyCount}
+			</if>
+			<if test="buySumMoney != null and buySumMoney != ''">
+				and buySumMoney=#{buySumMoney}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="user != null and user.id != null and user.id != ''">
+				and user_id=#{user.id}
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				and store_id=#{store.id}
+			</if>
+			<if test="procurementDate != null and procurementDate != ''">
+				and procurementDate=#{procurementDate}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="checkRemark != null and checkRemark != ''">
+				and checkRemark=#{checkRemark}
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			<if test="shipType != null and shipType != ''">
+				and shipType=#{shipType}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1'
+		</where>
+	</select>
+	
+	<select id="getCountByObject" resultType="Integer" parameterType="Procurement">
+		select count(*) From th_procurement
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="type != null and type != ''">
+				and type=#{type}
+			</if>
+			<if test="vende != null and vende.id != null and vende.id != ''">
+				and vende_id=#{vende.id}
+			</if>
+			<if test="procurementCode != null and procurementCode != ''">
+				and procurementCode=#{procurementCode}
+			</if>
+			<if test="count != null and count != ''">
+				and count=#{count}
+			</if>
+			<if test="sumMoney != null and sumMoney != ''">
+				and sumMoney=#{sumMoney}
+			</if>
+			<if test="buyCount != null and buyCount != ''">
+				and buyCount=#{buyCount}
+			</if>
+			<if test="buySumMoney != null and buySumMoney != ''">
+				and buySumMoney=#{buySumMoney}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="user != null and user.id != null and user.id != ''">
+				and user_id=#{user.id}
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				and store_id=#{store.id}
+			</if>
+			<if test="procurementDate != null and procurementDate != ''">
+				and procurementDate=#{procurementDate}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="checkRemark != null and checkRemark != ''">
+				and checkRemark=#{checkRemark}
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			<if test="shipType != null and shipType != ''">
+				and shipType=#{shipType}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1'
+		</where>
+	</select>
+
+	<select id="getProcurementByProcurement" resultMap="resultProcurement" parameterType="Procurement">
+		select * From th_procurement
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				and id=#{id}
+			</if>
+			<if test="type != null and type != ''">
+				and type=#{type}
+			</if>
+			<if test="vende != null and vende.id != null and vende.id != ''">
+				and vende_id=#{vende.id}
+			</if>
+			<if test="procurementCode != null and procurementCode != ''">
+				and procurementCode=#{procurementCode}
+			</if>
+			<if test="count != null and count != ''">
+				and count=#{count}
+			</if>
+			<if test="sumMoney != null and sumMoney != ''">
+				and sumMoney=#{sumMoney}
+			</if>
+			<if test="state != null and state != ''">
+				and state=#{state}
+			</if>
+			<if test="buyCount != null and buyCount != ''">
+				and buyCount=#{buyCount}
+			</if>
+			<if test="buySumMoney != null and buySumMoney != ''">
+				and buySumMoney=#{buySumMoney}
+			</if>
+			<if test="user != null and user.id != null and user.id != ''">
+				and user_id=#{user.id}
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				and store_id=#{store.id}
+			</if>
+			<if test="store != null and store.storeCode != null and store.storeCode != ''">
+				and store_id in (select id from th_store where storeCode=#{store.storeCode})
+			</if>
+			<if test="procurementDate != null and procurementDate != ''">
+				and procurementDate=#{procurementDate}
+			</if>
+			<if test="remark != null and remark != ''">
+				and remark=#{remark}
+			</if>
+			<if test="checkRemark != null and checkRemark != ''">
+				and checkRemark=#{checkRemark}
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				and isDelete=#{isDelete}
+			</if>
+			<if test="shipType != null and shipType != ''">
+				and shipType=#{shipType}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and createTime&gt;=#{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+				and createTime&lt;=#{endDate}
+			</if>
+			and isDelete='1'
+		</where>
+		order by createTime desc
+		<if test="startOfPage != null and startOfPage >= 0">limit ${startOfPage},${pageSize}</if>
+	</select>
+
+	<update id="update" parameterType="Procurement">
+		update th_procurement
+		<set>
+			<if test="type != null and type != ''">
+				type=#{type},
+			</if>
+			<if test="vende != null and vende.id != null and vende.id != ''">
+				vende_id=#{vende.id},
+			</if>
+			<if test="procurementCode != null and procurementCode != ''">
+				procurementCode=#{procurementCode},
+			</if>
+			<if test="count != null and count != ''">
+				count=#{count},
+			</if>
+			<if test="sumMoney != null and sumMoney != ''">
+				sumMoney=#{sumMoney},
+			</if>
+			<if test="buyCount != null and buyCount != ''">
+				buyCount=#{buyCount},
+			</if>
+			<if test="buySumMoney != null and buySumMoney != ''">
+				buySumMoney=#{buySumMoney},
+			</if>
+			<if test="state != null and state != ''">
+				state=#{state},
+			</if>
+			<if test="user != null and user.id != null and user.id != ''">
+				user_id=#{user.id},
+			</if>
+			<if test="store != null and store.id != null and store.id != ''">
+				store_id=#{store.id},
+			</if>
+			<if test="procurementDate != null and procurementDate != ''">
+				procurementDate=#{procurementDate},
+			</if>
+			<if test="remark != null and remark != ''">
+				remark=#{remark},
+			</if>
+			<if test="checkRemark != null and checkRemark != ''">
+				checkRemark=CONCAT(IFNULL(checkRemark,''),',',#{checkRemark}),
+			</if>
+			<if test="isDelete != null and isDelete != ''">
+				isDelete=#{isDelete},
+			</if>
+			<if test="shipType != null and shipType != ''">
+				shipType=#{shipType},
+			</if>
+			<if test="createTime != null and createTime != ''">
+				createTime=#{createTime},
+			</if>
+			<if test="'lt' != null and 'lt' != ''">
+				lt=#{lt},
+			</if>
+			<if test="lu != null and lu != ''">
+				lu=#{lu},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+</mapper>

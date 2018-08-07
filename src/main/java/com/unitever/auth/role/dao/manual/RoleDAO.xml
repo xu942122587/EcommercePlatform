@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTDMapper3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+<mapper namespace="com.unitever.auth.role.dao.manual.RoleDAO">
+	
+	<resultMap type="Role" id="resultListRole">
+		<id column="id" property="id"/>
+		<result column="name" property="name"/>
+		<result column="description" property="description"/>
+		<result column="type" property="type"/>
+		<result column="roleKey" property="roleKey"/>
+		<association property="functionIds" column="id" select="com.unitever.auth.role.dao.manual.RoleDAO.getFunctionIdsByRoleId"/>
+		<collection property="parentFunctions" column="id" select="com.unitever.auth.function.dao.manual.FunctionDAO.getParentFunctionsByRoleId"/>
+		<collection property="functions" column="id" select="com.unitever.auth.role.dao.manual.RoleDAO.getFunctionsByRoleId"/>
+		<collection property="operationCodes" column="id" select="com.unitever.auth.role.dao.manual.RoleDAO.getRoleOperationCodeStrByRoleId"/>
+	</resultMap>
+	
+	<insert id="save" parameterType="Role">
+		insert into auth_role(id,name,description,roleKey,type)
+		value(#{id},#{name},#{description},#{roleKey},#{type})
+	</insert>
+	
+	<insert id="saveRoleFunctionRelation" parameterType="RoleFunctionRelation">
+		insert into auth_role_function(id,roleId,functionId)
+		value(#{id},#{roleId},#{functionId})
+	</insert>
+	
+	<insert id="saveRoleOperationRelation" parameterType="RoleOperationRelation">
+		insert into auth_role_operation(id,roleId,operationId)
+		value(#{id},#{roleId},#{operationId})
+	</insert>
+	
+	<!-- 获取一条数据 -->
+    <select id="getAll" resultMap="resultListRole">
+     	select * from auth_role
+    </select>
+
+	<!-- 批量插入，实际代码里已经实现，所以就不用这个了 -->
+	<!-- <insert id="saveBatch" parameterType="java.util.List">
+		insert into auth_role(id,name,description,roleKey) values
+		<foreach collection="list" item="item" index="index" separator="," >  
+        (#{item.id},#{item.name},#{item.description},#{item.roleKey})  
+    	</foreach>
+	</insert> -->
+
+<!-- 获取所有非系统管理员的角色列表 -->
+	<select id="getNoSystemRoleList" resultMap="resultListRole" parameterType="String">
+		select * From auth_role where type!='1'
+	</select>
+
+	<select id="getRoleFunctionRelationsByRoleId" resultType="RoleFunctionRelation" parameterType="String">
+		select * From auth_role_function where roleId=#{roleId}
+	</select>
+<!-- 获取某角色的用户列表 -->	
+	<select id="getRoleByRoleKey" resultMap="resultListRole" >
+		select * From auth_role where roleKey=#{roleKey}
+	</select>
+	
+	<select id="getRoleOperationLsitByRoleId" resultType="RoleOperationRelation" parameterType="String">
+		select * From auth_role_operation where roleId=#{roleId}
+	</select>
+	
+	<select id="getFunctionsByRoleId" resultMap="com.unitever.auth.function.dao.manual.FunctionDAO.resultListFunction" parameterType="String">
+		select auth_function.id,name,url,description,seq,level,parentId from auth_function,auth_role_function where auth_function.id=auth_role_function.functionId and roleId=#{roleId}
+	</select>
+	<select id="getFunctionIdsByRoleId" resultType="String" parameterType="String">
+		select GROUP_CONCAT(auth_function.id) from auth_function,auth_role_function where auth_function.id=auth_role_function.functionId and roleId=#{roleId}
+	</select>
+
+	<!-- 拿到该角色所有Operation的Code -->
+	<select id="getRoleOperationCodeStrByRoleId" resultType="String" parameterType="String">
+		select GROUP_CONCAT(auth_operation.code) from auth_operation,auth_role_operation where auth_operation.id=auth_role_operation.operationId and roleId=#{roleId}
+	</select>
+
+	<!-- 删除记录 -->  
+    <delete id="deleteRoleFunctions" parameterType="String">  
+        delete from auth_role_function where roleId=#{roleId}
+    </delete> 
+	<!-- 删除记录 删除roel和operation的关联 -->
+    <delete id="deleteRoleOperations" parameterType="String">  
+        delete from auth_role_operation where roleId=#{roleId}
+    </delete> 
+    
+    <!-- 删除记录 删除roel和operation的关联 通过operationId -->  
+    <delete id="deleteRoleOperationsByOperationId" parameterType="String">  
+        delete from auth_role_operation where operationId=#{operationId}
+    </delete> 
+    <!-- 删除记录 -->  
+    <delete id="deleteRoleFunctionsByFunctionId" parameterType="String">  
+        delete from auth_role_function where functionId=#{functionId}
+    </delete> 
+    
+    <!-- 删除记录 -->  
+    <delete id="deleteRoleFunctionsByRoleId" parameterType="String">  
+        delete from auth_role_function where roleId=#{roleId}
+    </delete> 
+
+    <!-- 删除记录 -->  
+    <delete id="delete" parameterType="String">  
+        delete from auth_role where id=#{id}
+    </delete> 
+    
+     <!-- 获取一条数据 -->
+    <select id="get" resultMap="resultListRole">
+     	select * from auth_role where id=#{id}
+    </select>
+	
+	<!--更新一条数据-->
+	<update id="update" parameterType="Role">
+		update auth_role
+		<set>
+			<if test="name != null and name != '' ">
+				name=#{name},
+			</if>
+			<if test="description != null and description !='' ">
+				description=#{description},
+			</if>
+			<if test="roleKey != null and roleKey !='' ">
+				roleKey=#{roleKey},
+			</if>
+			<if test="type != null and type !='' ">
+				type=#{type},
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+
+<!-- 按照条件查询，sql中 limit 方式 分页查询结果 list -->
+	<select id="getRoleByRole" resultMap="resultListRole" parameterType="Role">
+		select * From auth_role
+		<where>
+			1=1
+			<if test="id != null ">
+				and id=#{id}
+			</if>
+			<if test="role.name != null ">
+				and name like CONCAT('%','${role.name}','%')
+			</if>
+			<if test="role.description != null and role.description !='' ">
+				and description like CONCAT('%','${role.description}','%')
+			</if>
+			<if test="role.roleKey != null and role.roleKey !='' ">
+				and roleKey like CONCAT('%','${role.roleKey}','%')
+			</if>
+		</where>
+		limit #{indexLine},#{maxLine}
+	</select>
+<!-- 按照条件查询 查询符合条件的总记录数 用作分页总记录数-->
+	<select id="getRoleSizeByRole" resultType="Integer" parameterType="Role">
+		select count(*) From auth_role
+		<where>
+			1=1
+			<if test="id != null ">
+				and id=#{id}
+			</if>
+			<if test="name != null ">
+				and name like CONCAT('%','${name}','%')
+			</if>
+			<if test="description != null and description !='' ">
+				and description like CONCAT('%','${description}','%')
+			</if>
+			<if test="roleKey != null and roleKey !='' ">
+				and roleKey like CONCAT('%','${roleKey}','%')
+			</if>
+		</where>
+	</select>
+</mapper>
